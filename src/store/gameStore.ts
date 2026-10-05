@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { GameState, Inventory, Pokemon, Pokedex } from '../types/game';
+import type { GameState, Inventory, Pokemon, Pokedex, MapNode, NodeType } from '../types/game';
 
 interface GameStoreState {
   // Game State
@@ -20,9 +20,12 @@ interface GameStoreState {
   healParty: () => void;
   gainExp: (pokemonIndex: number, amount: number) => void;
 
-  // Floor tracking
-  floor: number;
-  incrementFloor: () => void;
+  // Floor & Stage tracking
+  floor: number; // Represents the current Biome
+  stage: number; // 1 to 10
+  currentNodes: MapNode[];
+  advanceStage: () => void;
+  generateNodes: () => void;
   resetRun: () => void;
 
   currentEnemy: Pokemon | null;
@@ -157,13 +160,57 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   floor: 1,
-  incrementFloor: () => set((state) => ({ floor: state.floor + 1 })),
+  stage: 1,
+  currentNodes: [],
+
+  generateNodes: () => {
+    set((state) => {
+      if (state.stage === 10) {
+        return { currentNodes: [{ id: 'boss', type: 'BOSS' }] };
+      }
+
+      const numNodes = Math.random() > 0.5 ? 3 : 2;
+      const nodes: MapNode[] = [];
+
+      // Weights to make Combat more common
+      const weightedTypes: NodeType[] = [
+        'COMBAT', 'COMBAT', 'COMBAT',
+        'ELITE',
+        'SHOP',
+        'TREASURE', 'TREASURE',
+        'EVENT',
+        'CAMP'
+      ];
+
+      for (let i = 0; i < numNodes; i++) {
+        // Prevent multiple shops or camps in same choice if possible, but keep it simple for now
+        const type = weightedTypes[Math.floor(Math.random() * weightedTypes.length)];
+        nodes.push({ id: `node-${state.stage}-${i}`, type });
+      }
+
+      return { currentNodes: nodes };
+    });
+  },
+
+  advanceStage: () => set((state) => {
+    let nextStage = state.stage + 1;
+    let nextFloor = state.floor;
+
+    if (nextStage > 10) {
+      nextStage = 1;
+      nextFloor++;
+    }
+
+    return { stage: nextStage, floor: nextFloor };
+  }),
 
   resetRun: () => set({
     gameState: 'MAIN_MENU',
     inventory: { ...initialInventory },
     party: [],
     floor: 1,
+    stage: 1,
+    currentNodes: [],
     currentEnemy: null,
   }),
 

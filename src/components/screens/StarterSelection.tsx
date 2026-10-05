@@ -40,8 +40,11 @@ const StarterSelection: React.FC = () => {
     loadStarters(randomIds);
   };
 
+  const generateNodes = useGameStore(state => state.generateNodes);
+
   const selectStarter = (pokemon: Pokemon) => {
     addPokemonToParty(pokemon);
+    generateNodes();
     setGameState('DUNGEON');
   };
 

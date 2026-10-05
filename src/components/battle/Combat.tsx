@@ -80,7 +80,10 @@ const Combat: React.FC = () => {
       // Check if others alive
       const nextAlive = party.findIndex(p => p.currentHp > 0);
       if (nextAlive === -1) {
-         setTimeout(() => setGameState('GAME_OVER'), 2000);
+         setTimeout(() => {
+           setGameState('MAIN_MENU'); // Simply return to main menu for now or show dedicated game over
+           useGameStore.getState().resetRun();
+         }, 2000);
       } else {
          setMenuState('POKEMON');
       }
@@ -109,7 +112,11 @@ const Combat: React.FC = () => {
       const expGain = Math.floor((enemy.level * 50) / 7); // very simplified exp
       gainExp(activePlayerIdx, expGain);
 
-      setTimeout(() => setGameState('DUNGEON'), 2000);
+      setTimeout(() => {
+        useGameStore.getState().advanceStage();
+        useGameStore.getState().generateNodes();
+        setGameState('DUNGEON');
+      }, 2000);
     } else {
       setTimeout(() => enemyTurn(playerPokemon, { ...enemy, currentHp: newEnemyHp }), 1500);
     }
@@ -137,7 +144,11 @@ const Combat: React.FC = () => {
         setLog(`Gotcha! ${enemy.name} was caught!`);
         markCaught(enemy.id);
         addPokemonToParty({ ...enemy, currentHp: enemy.maxHp }); // Full heal on catch for simplicity
-        setTimeout(() => setGameState('DUNGEON'), 2000);
+        setTimeout(() => {
+          useGameStore.getState().advanceStage();
+          useGameStore.getState().generateNodes();
+          setGameState('DUNGEON');
+        }, 2000);
       } else {
         setLog(`Oh no! The Pokémon broke free!`);
         setTimeout(() => enemyTurn(playerPokemon, enemy), 1500);

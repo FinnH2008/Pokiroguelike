@@ -1,4 +1,11 @@
-export type GameState = 'MAIN_MENU' | 'STARTER_SELECTION' | 'DUNGEON' | 'COMBAT' | 'GAME_OVER' | 'VICTORY' | 'SHOP' | 'CRAFTING';
+export type GameState = 'MAIN_MENU' | 'STARTER_SELECTION' | 'DUNGEON' | 'COMBAT' | 'GAME_OVER' | 'VICTORY' | 'SHOP' | 'CRAFTING' | 'WHEEL' | 'TREASURE';
+
+export type NodeType = 'COMBAT' | 'ELITE' | 'SHOP' | 'TREASURE' | 'EVENT' | 'CAMP' | 'BOSS';
+
+export interface MapNode {
+  id: string;
+  type: NodeType;
+}
 
 export interface PokemonStat {
   base_stat: number;

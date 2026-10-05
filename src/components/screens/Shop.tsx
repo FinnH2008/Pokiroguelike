@@ -48,9 +48,17 @@ const Shop: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-auto">
-        <button className="poke-btn w-full py-3" onClick={() => setGameState('DUNGEON')}>
-          Leave Shop
+      <div className="mt-auto flex flex-col gap-2">
+        <button className="poke-btn w-full py-3" onClick={() => setGameState('CRAFTING')}>
+          Go to Crafting
+        </button>
+        <button className="poke-btn w-full py-3" onClick={() => {
+          // Shop counts as completing the node, advance stage when leaving.
+          useGameStore.getState().advanceStage();
+          useGameStore.getState().generateNodes();
+          setGameState('DUNGEON');
+        }}>
+          Leave
         </button>
       </div>
     </div>

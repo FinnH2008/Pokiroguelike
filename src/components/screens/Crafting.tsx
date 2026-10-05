@@ -50,9 +50,9 @@ const Crafting: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-auto">
-        <button className="poke-btn w-full py-3" onClick={() => setGameState('DUNGEON')}>
-          Return to Dungeon
+      <div className="mt-auto flex flex-col gap-2">
+        <button className="poke-btn w-full py-3" onClick={() => setGameState('SHOP')}>
+          Back to Shop
         </button>
       </div>
     </div>
