@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore, usePokedexStore } from '../../store/gameStore';
 import { getTypeEffectiveness, getRandomInt } from '../../services/api';
 import type { Pokemon, Move } from '../../types/game';
+import Tooltip from '../ui/Tooltip';
 
 const Combat: React.FC = () => {
   const { currentEnemy, party, inventory, removeItem, addPokemonToParty, setGameState, gainExp } = useGameStore();
@@ -122,13 +123,21 @@ const Combat: React.FC = () => {
     }
   };
 
-  const handleCatch = (type: 'pokeballs' | 'masterballs') => {
+  const handleCatch = (type: 'pokeballs' | 'superballs' | 'hyperballs' | 'masterballs') => {
     if (!enemy) return;
     if (inventory[type] <= 0) return;
 
     removeItem(type, 1);
     setMenuState('MAIN');
-    setLog(`You threw a ${type === 'masterballs' ? 'Masterball' : 'Pokéball'}!`);
+
+    const ballNames = {
+      pokeballs: 'Pokéball',
+      superballs: 'Superball',
+      hyperballs: 'Hyperball',
+      masterballs: 'Masterball'
+    };
+
+    setLog(`You threw a ${ballNames[type]}!`);
 
     setTimeout(() => {
       let caught = false;
@@ -136,8 +145,13 @@ const Combat: React.FC = () => {
         caught = true;
       } else {
         const hpPercent = enemy.currentHp / enemy.maxHp;
-        const catchRate = hpPercent < 0.2 ? 0.8 : hpPercent < 0.5 ? 0.5 : 0.2;
-        caught = Math.random() < catchRate;
+        let baseRate = hpPercent < 0.2 ? 0.8 : hpPercent < 0.5 ? 0.5 : 0.2;
+
+        let multiplier = 1;
+        if (type === 'superballs') multiplier = 1.5;
+        if (type === 'hyperballs') multiplier = 2;
+
+        caught = Math.random() < (baseRate * multiplier);
       }
 
       if (caught) {
@@ -156,14 +170,30 @@ const Combat: React.FC = () => {
     }, 2000);
   };
 
-  const handlePotion = () => {
-    if (inventory.potions <= 0 || !playerPokemon) return;
-    removeItem('potions', 1);
-    const newHp = Math.min(playerPokemon.maxHp, playerPokemon.currentHp + 20);
+  const handlePotion = (type: 'potions' | 'superpotions') => {
+    if (inventory[type] <= 0 || !playerPokemon) return;
+    removeItem(type, 1);
+
+    const healAmount = type === 'superpotions' ? 50 : 20;
+    const newHp = Math.min(playerPokemon.maxHp, playerPokemon.currentHp + healAmount);
     useGameStore.getState().updatePokemon(activePlayerIdx, { currentHp: newHp });
-    setLog(`Used Potion! Restored HP.`);
+
+    setLog(`Used ${type === 'superpotions' ? 'Super Potion' : 'Potion'}! Restored HP.`);
     setMenuState('MAIN');
     setTimeout(() => enemyTurn({ ...playerPokemon, currentHp: newHp }, enemy!), 1500);
+  };
+
+  const handleRevive = (idx: number) => {
+    if (inventory.revives <= 0) return;
+    const poke = party[idx];
+    if (poke.currentHp > 0) return;
+
+    removeItem('revives', 1);
+    useGameStore.getState().updatePokemon(idx, { currentHp: Math.floor(poke.maxHp / 2) });
+    setLog(`Revived ${poke.name}!`);
+    // Doesn't cost a turn if done from Pokemon menu ideally, but let's say it does
+    setMenuState('MAIN');
+    setTimeout(() => enemyTurn(playerPokemon, enemy!), 1500);
   };
 
   if (!enemy || !playerPokemon) return <div className="text-white">Error loading combat</div>;
@@ -255,10 +285,12 @@ const Combat: React.FC = () => {
             <div className="flex flex-col gap-2 h-full">
               <div className="grid grid-cols-2 gap-2 flex-1">
                 {playerPokemon.moves.map((m, i) => (
-                  <button key={i} className="poke-btn flex flex-col items-center justify-center gap-1 !p-2" onClick={() => handleAttack(m)}>
-                    <span className="text-xs font-retro truncate w-full text-center">{m.name}</span>
-                    <span className="text-[9px] font-sans uppercase tracking-wider text-gray-400 bg-black/30 px-2 py-0.5 rounded-full">{m.type}</span>
-                  </button>
+                  <Tooltip key={i} content={`Power: ${m.power || '-'} | Acc: ${m.accuracy || '-'}%`} side="top">
+                    <button className="poke-btn flex flex-col items-center justify-center gap-1 !p-2 w-full h-full" onClick={() => handleAttack(m)}>
+                      <span className="text-xs font-retro truncate w-full text-center">{m.name}</span>
+                      <span className="text-[9px] font-sans uppercase tracking-wider text-gray-400 bg-black/30 px-2 py-0.5 rounded-full">{m.type}</span>
+                    </button>
+                  </Tooltip>
                 ))}
               </div>
               <button className="poke-btn !py-2 text-xs" onClick={() => setMenuState('MAIN')}>Back</button>
@@ -267,15 +299,24 @@ const Combat: React.FC = () => {
 
           {menuState === 'BAG' && (
             <div className="flex flex-col gap-2 h-full">
-              <div className="grid grid-cols-1 gap-2 flex-1 overflow-y-auto no-scrollbar">
-                <button className="poke-btn flex justify-between items-center !p-3" onClick={() => handleCatch('pokeballs')} disabled={inventory.pokeballs <= 0}>
-                  <span>Pokéball</span> <span className="bg-black/40 px-2 py-1 rounded text-xs">{inventory.pokeballs}</span>
+              <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto no-scrollbar pr-1">
+                <button className="poke-btn flex justify-between items-center !p-2" onClick={() => handleCatch('pokeballs')} disabled={inventory.pokeballs <= 0}>
+                  <span className="text-[10px]">Pokéball</span> <span className="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">{inventory.pokeballs}</span>
                 </button>
-                <button className="poke-btn flex justify-between items-center !p-3" onClick={() => handleCatch('masterballs')} disabled={inventory.masterballs <= 0}>
-                  <span className="text-purple-300">Masterball</span> <span className="bg-black/40 px-2 py-1 rounded text-xs">{inventory.masterballs}</span>
+                <button className="poke-btn flex justify-between items-center !p-2" onClick={() => handleCatch('superballs')} disabled={inventory.superballs <= 0}>
+                  <span className="text-[10px] text-blue-300">Superball</span> <span className="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">{inventory.superballs}</span>
                 </button>
-                <button className="poke-btn flex justify-between items-center !p-3" onClick={handlePotion} disabled={inventory.potions <= 0}>
-                  <span className="text-green-300">Potion (20HP)</span> <span className="bg-black/40 px-2 py-1 rounded text-xs">{inventory.potions}</span>
+                <button className="poke-btn flex justify-between items-center !p-2" onClick={() => handleCatch('hyperballs')} disabled={inventory.hyperballs <= 0}>
+                  <span className="text-[10px] text-yellow-300">Hyperball</span> <span className="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">{inventory.hyperballs}</span>
+                </button>
+                <button className="poke-btn flex justify-between items-center !p-2" onClick={() => handleCatch('masterballs')} disabled={inventory.masterballs <= 0}>
+                  <span className="text-[10px] text-purple-300">Masterball</span> <span className="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">{inventory.masterballs}</span>
+                </button>
+                <button className="poke-btn flex justify-between items-center !p-2" onClick={() => handlePotion('potions')} disabled={inventory.potions <= 0}>
+                  <span className="text-[10px] text-green-300">Potion</span> <span className="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">{inventory.potions}</span>
+                </button>
+                <button className="poke-btn flex justify-between items-center !p-2" onClick={() => handlePotion('superpotions')} disabled={inventory.superpotions <= 0}>
+                  <span className="text-[10px] text-green-400">Super Pot.</span> <span className="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">{inventory.superpotions}</span>
                 </button>
               </div>
               <button className="poke-btn !py-2 text-xs" onClick={() => setMenuState('MAIN')}>Back</button>
@@ -286,23 +327,27 @@ const Combat: React.FC = () => {
             <div className="flex flex-col gap-2 h-full">
               <div className="grid grid-cols-1 gap-2 flex-1 overflow-y-auto no-scrollbar">
                 {party.map((p, idx) => (
-                  <button
-                    key={idx}
-                    disabled={p.currentHp <= 0}
-                    className={`poke-btn flex items-center gap-3 !p-2 ${p.currentHp <= 0 ? 'opacity-30' : ''}`}
-                    onClick={() => {
-                      setActivePlayerIdx(idx);
-                      setMenuState('MAIN');
-                      setLog(`Go! ${p.name}!`);
-                      setTimeout(() => enemyTurn(p, enemy), 1500);
-                    }}
-                  >
-                    <img src={p.sprites.front} className="w-8 h-8 pixelated" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-xs font-retro uppercase">{p.name}</span>
-                      <span className="text-[10px] font-sans text-gray-400">HP: {p.currentHp}/{p.maxHp}</span>
-                    </div>
-                  </button>
+                  <div key={idx} className="flex gap-2">
+                    <button
+                      disabled={p.currentHp <= 0}
+                      className={`poke-btn flex-1 flex items-center gap-3 !p-2 ${p.currentHp <= 0 ? 'opacity-30' : ''}`}
+                      onClick={() => {
+                        setActivePlayerIdx(idx);
+                        setMenuState('MAIN');
+                        setLog(`Go! ${p.name}!`);
+                        setTimeout(() => enemyTurn(p, enemy), 1500);
+                      }}
+                    >
+                      <img src={p.sprites.front} className="w-8 h-8 pixelated" />
+                      <div className="flex flex-col items-start">
+                        <span className="text-xs font-retro uppercase">{p.name}</span>
+                        <span className="text-[10px] font-sans text-gray-400">HP: {p.currentHp}/{p.maxHp}</span>
+                      </div>
+                    </button>
+                    {p.currentHp <= 0 && inventory.revives > 0 && (
+                      <button className="poke-btn !p-2 !bg-purple-500/20 text-purple-300" onClick={() => handleRevive(idx)}>Revive</button>
+                    )}
+                  </div>
                 ))}
               </div>
               <button className="poke-btn !py-2 text-xs" onClick={() => setMenuState('MAIN')}>Back</button>

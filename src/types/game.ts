@@ -63,9 +63,13 @@ export interface Pokemon {
 export interface Inventory {
   gold: number;
   pokeballs: number;
-  potions: number;
-  materials: number;
+  superballs: number;
+  hyperballs: number;
   masterballs: number;
+  potions: number;
+  superpotions: number;
+  revives: number;
+  materials: number;
   rarecandies: number;
 }
 

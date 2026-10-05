@@ -39,11 +39,15 @@ interface PersistentStoreState {
 }
 
 const initialInventory: Inventory = {
-  gold: 0,
+  gold: 100, // Give some starting gold for the new shop
   pokeballs: 5,
-  potions: 3,
-  materials: 0,
+  superballs: 0,
+  hyperballs: 0,
   masterballs: 0,
+  potions: 3,
+  superpotions: 0,
+  revives: 1,
+  materials: 0,
   rarecandies: 0,
 };
 

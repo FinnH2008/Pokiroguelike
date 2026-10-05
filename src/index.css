@@ -8,7 +8,7 @@
   }
 
   .poke-btn {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 text-white font-sans font-medium py-3 px-6 rounded-2xl shadow-glass hover:bg-white/20 active:shadow-glass-pressed active:scale-95 transition-all duration-200 text-sm sm:text-base cursor-pointer;
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 text-white font-sans font-medium py-3 px-6 rounded-2xl shadow-glass hover:bg-white/20 active:shadow-glass-pressed active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/20 transition-all duration-200 text-sm sm:text-base cursor-pointer;
   }
 
   .pixelated {

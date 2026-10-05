@@ -101,16 +101,33 @@ const Dungeon: React.FC = () => {
     generateNodes();
   };
 
-  const handleRareCandy = (e: React.MouseEvent, pokeIndex: number) => {
+  const handleItemUse = (e: React.MouseEvent, pokeIndex: number, itemType: 'rarecandies' | 'potions' | 'superpotions' | 'revives') => {
     e.stopPropagation();
-    if (inventory.rarecandies > 0) {
-      const removed = removeItem('rarecandies', 1);
-      if (removed) {
-        const poke = party[pokeIndex];
+    const poke = party[pokeIndex];
+
+    if (itemType === 'revives' && poke.currentHp === 0) {
+      if (removeItem('revives', 1)) {
+        useGameStore.getState().updatePokemon(pokeIndex, { currentHp: Math.floor(poke.maxHp / 2) });
+        addLog(`Revived ${poke.name}!`);
+      }
+    } else if (itemType === 'potions' && poke.currentHp > 0 && poke.currentHp < poke.maxHp) {
+      if (removeItem('potions', 1)) {
+        useGameStore.getState().updatePokemon(pokeIndex, { currentHp: Math.min(poke.maxHp, poke.currentHp + 20) });
+        addLog(`Healed ${poke.name} for 20 HP.`);
+      }
+    } else if (itemType === 'superpotions' && poke.currentHp > 0 && poke.currentHp < poke.maxHp) {
+      if (removeItem('superpotions', 1)) {
+        useGameStore.getState().updatePokemon(pokeIndex, { currentHp: Math.min(poke.maxHp, poke.currentHp + 50) });
+        addLog(`Healed ${poke.name} for 50 HP.`);
+      }
+    } else if (itemType === 'rarecandies' && poke.currentHp > 0) {
+      if (removeItem('rarecandies', 1)) {
         const expNeeded = poke.level * 100 - poke.exp;
         useGameStore.getState().gainExp(pokeIndex, expNeeded);
         addLog(`${poke.name} leveled up!`);
       }
+    } else {
+      addLog(`Cannot use that on ${poke.name}.`);
     }
   };
 
@@ -199,15 +216,21 @@ const Dungeon: React.FC = () => {
                 </div>
               </div>
 
-              {/* Rare candy overlay */}
-              {inventory.rarecandies > 0 && (
-                <button
-                  onClick={(e) => handleRareCandy(e, idx)}
-                  className="hidden group-hover:flex absolute inset-0 bg-ds-hp-yellow/90 backdrop-blur-sm items-center justify-center text-black font-sans font-bold text-xs cursor-pointer rounded-2xl"
-                >
-                  Give Rare Candy
-                </button>
-              )}
+              {/* Quick Item Actions Overlay (Visible on Hover & Focus) */}
+              <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-black/80 backdrop-blur-md p-1 rounded-lg border border-white/20 shadow-xl transition-opacity">
+                {inventory.revives > 0 && p.currentHp === 0 && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'revives')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-purple-300 font-sans" title="Use Revive">Revive</button>
+                )}
+                {inventory.potions > 0 && p.currentHp > 0 && p.currentHp < p.maxHp && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'potions')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-green-300 font-sans" title="Use Potion (+20)">Pot.</button>
+                )}
+                {inventory.superpotions > 0 && p.currentHp > 0 && p.currentHp < p.maxHp && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'superpotions')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-green-400 font-sans" title="Use Super Potion (+50)">S.Pot</button>
+                )}
+                {inventory.rarecandies > 0 && p.currentHp > 0 && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'rarecandies')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-yellow-300 font-sans" title="Use Rare Candy">Candy</button>
+                )}
+              </div>
             </div>
           ))}
         </div>
