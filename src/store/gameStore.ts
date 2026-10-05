@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { GameState, Inventory, Pokemon, Pokedex, MapNode, NodeType, WeatherType } from '../types/game';
+import type { GameState, Inventory, Pokemon, Pokedex, MapNode, NodeType, WeatherType, MetaUpgrade } from '../types/game';
 
 interface GameStoreState {
   // Game State
@@ -37,8 +37,12 @@ interface GameStoreState {
 
 interface PersistentStoreState {
   pokedex: Pokedex;
+  tokens: number;
+  upgrades: Record<MetaUpgrade, number>;
   markSeen: (id: number) => void;
   markCaught: (id: number) => void;
+  addTokens: (amount: number) => void;
+  buyUpgrade: (upgrade: MetaUpgrade, cost: number) => boolean;
 }
 
 const initialInventory: Inventory = {
@@ -171,12 +175,17 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       if (leveledUp) {
         newStats = {
           hp: calcStat(p.baseStats.hp, p.ivs.hp, p.evs.hp, newLevel, true),
-          attack: calcStat(p.baseStats.attack, p.ivs.attack, p.evs.attack, newLevel),
+          attack: calcStat(p.baseStats.attack, p.ivs.attack, p.ivs.attack, newLevel),
           defense: calcStat(p.baseStats.defense, p.ivs.defense, p.evs.defense, newLevel),
           specialAttack: calcStat(p.baseStats.specialAttack, p.ivs.specialAttack, p.evs.specialAttack, newLevel),
           specialDefense: calcStat(p.baseStats.specialDefense, p.ivs.specialDefense, p.evs.specialDefense, newLevel),
           speed: calcStat(p.baseStats.speed, p.ivs.speed, p.evs.speed, newLevel),
         };
+        // Apply HP Boost from upgrades
+        const upgrades = usePokedexStore.getState().upgrades;
+        const hpMultiplier = 1 + (upgrades.hp_boost * 0.05); // +5% per level
+        newStats.hp = Math.floor(newStats.hp * hpMultiplier);
+
         newMaxHp = newStats.hp;
       }
 
@@ -257,11 +266,18 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   setWeather: (w) => set({ weather: w }),
 }));
 
-// Persistent Store (Pokedex only)
+// Persistent Store (Pokedex & Meta Progression)
 export const usePokedexStore = create<PersistentStoreState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       pokedex: {},
+      tokens: 0,
+      upgrades: {
+        hp_boost: 0,
+        token_multiplier: 0,
+        shop_discount: 0,
+        lucky_wheel: 0,
+      },
       markSeen: (id) =>
         set((state) => ({
           pokedex: {
@@ -276,6 +292,24 @@ export const usePokedexStore = create<PersistentStoreState>()(
             [id]: { seen: true, caught: true },
           },
         })),
+      addTokens: (amount) => set((state) => {
+        const mult = 1 + (state.upgrades.token_multiplier * 0.2); // +20% tokens per level
+        return { tokens: state.tokens + Math.floor(amount * mult) };
+      }),
+      buyUpgrade: (upgrade, cost) => {
+        const state = get();
+        if (state.tokens >= cost) {
+          set({
+            tokens: state.tokens - cost,
+            upgrades: {
+              ...state.upgrades,
+              [upgrade]: (state.upgrades[upgrade] || 0) + 1
+            }
+          });
+          return true;
+        }
+        return false;
+      }
     }),
     {
       name: 'pokemon-roguelike-pokedex',

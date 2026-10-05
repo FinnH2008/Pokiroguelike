@@ -120,3 +120,11 @@ export interface PokedexEntry {
 export interface Pokedex {
   [id: number]: PokedexEntry;
 }
+
+export type MetaUpgrade = 'hp_boost' | 'token_multiplier' | 'shop_discount' | 'lucky_wheel';
+
+export interface PersistentData {
+  pokedex: Pokedex;
+  tokens: number;
+  upgrades: Record<MetaUpgrade, number>; // level of the upgrade
+}

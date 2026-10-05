@@ -1,12 +1,19 @@
 import React from 'react';
-import { useGameStore } from '../../store/gameStore';
+import { useGameStore, usePokedexStore } from '../../store/gameStore';
 import Tooltip from '../ui/Tooltip';
 import { ITEM_SPRITES } from '../../utils/itemSprites';
 
 const Shop: React.FC = () => {
   const { inventory, removeItem, addItem, setGameState } = useGameStore();
+  const { upgrades } = usePokedexStore();
 
-  const buyItem = (item: keyof typeof inventory, cost: number) => {
+  const getDiscountedCost = (baseCost: number) => {
+    const discount = upgrades.shop_discount * 0.05; // 5% per level
+    return Math.max(1, Math.floor(baseCost * (1 - discount)));
+  };
+
+  const buyItem = (item: keyof typeof inventory, baseCost: number) => {
+    const cost = getDiscountedCost(baseCost);
     if (inventory.gold >= cost) {
       removeItem('gold', cost);
       addItem(item, 1);
@@ -39,8 +46,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Catch Rate: 1x</div>
                 </div>
               </div>
-              <button aria-label="Buy PokéBall for 50 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 50 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-white hover:text-black hover:border-white'}`} onClick={() => buyItem('pokeballs', 50)} disabled={inventory.gold < 50}>
-                50 G
+              <button aria-label={`Buy PokéBall for ${getDiscountedCost(50)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(50) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-white hover:text-black hover:border-white'}`} onClick={() => buyItem('pokeballs', 50)} disabled={inventory.gold < getDiscountedCost(50)}>
+                {getDiscountedCost(50)} G
               </button>
             </div>
           </Tooltip>
@@ -54,8 +61,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Catch Rate: 1.5x</div>
                 </div>
               </div>
-              <button aria-label="Buy Superball for 150 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 150 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-blue-400 hover:text-black hover:border-blue-400'}`} onClick={() => buyItem('superballs', 150)} disabled={inventory.gold < 150}>
-                150 G
+              <button aria-label={`Buy Superball for ${getDiscountedCost(150)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(150) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-blue-400 hover:text-black hover:border-blue-400'}`} onClick={() => buyItem('superballs', 150)} disabled={inventory.gold < getDiscountedCost(150)}>
+                {getDiscountedCost(150)} G
               </button>
             </div>
           </Tooltip>
@@ -69,8 +76,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Catch Rate: 2x</div>
                 </div>
               </div>
-              <button aria-label="Buy Hyperball for 300 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 300 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-yellow-400 hover:text-black hover:border-yellow-400'}`} onClick={() => buyItem('hyperballs', 300)} disabled={inventory.gold < 300}>
-                300 G
+              <button aria-label={`Buy Hyperball for ${getDiscountedCost(300)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(300) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-yellow-400 hover:text-black hover:border-yellow-400'}`} onClick={() => buyItem('hyperballs', 300)} disabled={inventory.gold < getDiscountedCost(300)}>
+                {getDiscountedCost(300)} G
               </button>
             </div>
           </Tooltip>
@@ -84,8 +91,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Heals 20 HP</div>
                 </div>
               </div>
-              <button aria-label="Buy Potion for 30 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 30 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-green-400 hover:text-black hover:border-green-400'}`} onClick={() => buyItem('potions', 30)} disabled={inventory.gold < 30}>
-                30 G
+              <button aria-label={`Buy Potion for ${getDiscountedCost(30)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(30) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-green-400 hover:text-black hover:border-green-400'}`} onClick={() => buyItem('potions', 30)} disabled={inventory.gold < getDiscountedCost(30)}>
+                {getDiscountedCost(30)} G
               </button>
             </div>
           </Tooltip>
@@ -99,8 +106,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Heals 50 HP</div>
                 </div>
               </div>
-              <button aria-label="Buy Super Potion for 80 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 80 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-green-300 hover:text-black hover:border-green-300'}`} onClick={() => buyItem('superpotions', 80)} disabled={inventory.gold < 80}>
-                80 G
+              <button aria-label={`Buy Super Potion for ${getDiscountedCost(80)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(80) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-green-300 hover:text-black hover:border-green-300'}`} onClick={() => buyItem('superpotions', 80)} disabled={inventory.gold < getDiscountedCost(80)}>
+                {getDiscountedCost(80)} G
               </button>
             </div>
           </Tooltip>
@@ -114,8 +121,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Revives (50% HP)</div>
                 </div>
               </div>
-              <button aria-label="Buy Revive for 200 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 200 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-purple-400 hover:text-black hover:border-purple-400'}`} onClick={() => buyItem('revives', 200)} disabled={inventory.gold < 200}>
-                200 G
+              <button aria-label={`Buy Revive for ${getDiscountedCost(200)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(200) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-purple-400 hover:text-black hover:border-purple-400'}`} onClick={() => buyItem('revives', 200)} disabled={inventory.gold < getDiscountedCost(200)}>
+                {getDiscountedCost(200)} G
               </button>
             </div>
           </Tooltip>
@@ -129,8 +136,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Cures Poison</div>
                 </div>
               </div>
-              <button aria-label="Buy Antidote for 50 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 50 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-pink-400 hover:text-black hover:border-pink-400'}`} onClick={() => buyItem('antidotes', 50)} disabled={inventory.gold < 50}>
-                50 G
+              <button aria-label={`Buy Antidote for ${getDiscountedCost(50)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(50) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-pink-400 hover:text-black hover:border-pink-400'}`} onClick={() => buyItem('antidotes', 50)} disabled={inventory.gold < getDiscountedCost(50)}>
+                {getDiscountedCost(50)} G
               </button>
             </div>
           </Tooltip>
@@ -144,8 +151,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Cures Burn</div>
                 </div>
               </div>
-              <button aria-label="Buy Burn Heal for 50 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 50 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-red-400 hover:text-black hover:border-red-400'}`} onClick={() => buyItem('burnheals', 50)} disabled={inventory.gold < 50}>
-                50 G
+              <button aria-label={`Buy Burn Heal for ${getDiscountedCost(50)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(50) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-red-400 hover:text-black hover:border-red-400'}`} onClick={() => buyItem('burnheals', 50)} disabled={inventory.gold < getDiscountedCost(50)}>
+                {getDiscountedCost(50)} G
               </button>
             </div>
           </Tooltip>
@@ -159,8 +166,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Passive Healing</div>
                 </div>
               </div>
-              <button aria-label="Buy Leftovers for 500 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 500 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-yellow-500 hover:text-black hover:border-yellow-500'}`} onClick={() => buyItem('leftovers', 500)} disabled={inventory.gold < 500}>
-                500 G
+              <button aria-label={`Buy Leftovers for ${getDiscountedCost(500)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(500) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-yellow-500 hover:text-black hover:border-yellow-500'}`} onClick={() => buyItem('leftovers', 500)} disabled={inventory.gold < getDiscountedCost(500)}>
+                {getDiscountedCost(500)} G
               </button>
             </div>
           </Tooltip>
@@ -174,8 +181,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">+Dmg, -HP</div>
                 </div>
               </div>
-              <button aria-label="Buy Life Orb for 800 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 800 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-purple-500 hover:text-black hover:border-purple-500'}`} onClick={() => buyItem('lifeorbs', 800)} disabled={inventory.gold < 800}>
-                800 G
+              <button aria-label={`Buy Life Orb for ${getDiscountedCost(800)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(800) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-purple-500 hover:text-black hover:border-purple-500'}`} onClick={() => buyItem('lifeorbs', 800)} disabled={inventory.gold < getDiscountedCost(800)}>
+                {getDiscountedCost(800)} G
               </button>
             </div>
           </Tooltip>
@@ -189,8 +196,8 @@ const Shop: React.FC = () => {
                   <div className="text-[10px] text-gray-400 font-sans mt-1">Mega Evolution</div>
                 </div>
               </div>
-              <button aria-label="Buy Mega Stone for 1000 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 1000 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-cyan-400 hover:text-black hover:border-cyan-400'}`} onClick={() => buyItem('megastones', 1000)} disabled={inventory.gold < 1000}>
-                1000 G
+              <button aria-label={`Buy Mega Stone for ${getDiscountedCost(1000)} Gold`} className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < getDiscountedCost(1000) ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-cyan-400 hover:text-black hover:border-cyan-400'}`} onClick={() => buyItem('megastones', 1000)} disabled={inventory.gold < getDiscountedCost(1000)}>
+                {getDiscountedCost(1000)} G
               </button>
             </div>
           </Tooltip>

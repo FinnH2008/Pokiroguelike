@@ -8,7 +8,7 @@ import Tooltip from '../ui/Tooltip';
 import { Swords, Backpack, Users, PersonStanding } from 'lucide-react';
 
 const Combat: React.FC = () => {
-  const { currentEnemy, party, inventory, removeItem, addPokemonToParty, setGameState, gainExp, floor, weather } = useGameStore();
+  const { currentEnemy, party, inventory, removeItem, addPokemonToParty, setGameState, gainExp, floor, stage, weather } = useGameStore();
   const combatBgStyle = getCombatBackground(getBiomeForFloor(floor));
   const { markSeen, markCaught } = usePokedexStore();
 
@@ -229,7 +229,7 @@ const Combat: React.FC = () => {
          setTimeout(() => {
            setGameState('MAIN_MENU');
            useGameStore.getState().resetRun();
-         }, 2000);
+         }, 1500);
       } else {
          setMenuState('POKEMON');
       }
@@ -241,7 +241,7 @@ const Combat: React.FC = () => {
            setLog(`${pPoke.name} fainted!`);
            setMenuState('POKEMON');
         }
-      }, 1500);
+      }, 1000);
     }
   };
 
@@ -342,11 +342,19 @@ const Combat: React.FC = () => {
 
       gainExp(activePlayerIdx, expGain);
 
+      // Dopamine Token Gain
+      // Normally 1 token. Boss gives 10. Elite gives 5.
+      // (Since we don't pass the exact node type to combat state right now, we can approximate by level/boss checks)
+      const isBoss = enemy.level >= floor * 2 + stage + 8;
+      const tokensGained = isBoss ? 10 : 2;
+      usePokedexStore.getState().addTokens(tokensGained);
+      setLog(`Enemy ${enemy.name} fainted! Earned ${tokensGained} Tokens!`);
+
       setTimeout(() => {
         useGameStore.getState().advanceStage();
         useGameStore.getState().generateNodes();
         setGameState('DUNGEON');
-      }, 2000);
+      }, 1500);
     } else {
       setTimeout(() => {
          const afterHp = resolvePostTurn(enemy, false);
@@ -395,19 +403,30 @@ const Combat: React.FC = () => {
       }
 
       if (caught) {
-        setLog(`Gotcha! ${enemy.name} was caught!`);
+        setLog(`Gotcha! ${enemy.name} was caught! Earned 5 Tokens!`);
+        usePokedexStore.getState().addTokens(5);
         markCaught(enemy.id);
-        addPokemonToParty({ ...enemy, currentHp: enemy.maxHp }); // Full heal on catch for simplicity
+
+        const { upgrades } = usePokedexStore.getState();
+        const hpMultiplier = 1 + (upgrades.hp_boost * 0.05);
+        const boostedEnemy = {
+          ...enemy,
+          stats: { ...enemy.stats, hp: Math.floor(enemy.stats.hp * hpMultiplier) },
+          maxHp: Math.floor(enemy.maxHp * hpMultiplier),
+          currentHp: Math.floor(enemy.maxHp * hpMultiplier)
+        };
+
+        addPokemonToParty(boostedEnemy);
         setTimeout(() => {
           useGameStore.getState().advanceStage();
           useGameStore.getState().generateNodes();
           setGameState('DUNGEON');
-        }, 2000);
+        }, 1500);
       } else {
         setLog(`Oh no! The Pokémon broke free!`);
-        setTimeout(() => enemyTurn(playerPokemon, enemy), 1500);
+        setTimeout(() => enemyTurn(playerPokemon, enemy), 1000);
       }
-    }, 2000);
+    }, 1500);
   };
 
   const handlePotion = (type: 'potions' | 'superpotions') => {

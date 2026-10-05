@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGameStore } from '../../store/gameStore';
+import { useGameStore, usePokedexStore } from '../../store/gameStore';
 import { fetchPokemonData, getRandomInt } from '../../services/api';
 import type { Pokemon } from '../../types/game';
 import { Loader2 } from 'lucide-react';
@@ -43,7 +43,21 @@ const StarterSelection: React.FC = () => {
   const generateNodes = useGameStore(state => state.generateNodes);
 
   const selectStarter = (pokemon: Pokemon) => {
-    addPokemonToParty(pokemon);
+    // Apply meta-progression HP boost immediately
+    const { upgrades } = usePokedexStore.getState();
+    const hpMultiplier = 1 + (upgrades.hp_boost * 0.05);
+
+    const boostedPokemon = {
+      ...pokemon,
+      stats: {
+        ...pokemon.stats,
+        hp: Math.floor(pokemon.stats.hp * hpMultiplier)
+      },
+      maxHp: Math.floor(pokemon.maxHp * hpMultiplier),
+      currentHp: Math.floor(pokemon.currentHp * hpMultiplier)
+    };
+
+    addPokemonToParty(boostedPokemon);
     generateNodes();
     setGameState('DUNGEON');
   };

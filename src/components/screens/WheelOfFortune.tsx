@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useGameStore } from '../../store/gameStore';
+import { useGameStore, usePokedexStore } from '../../store/gameStore';
 
 const WheelOfFortune: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
   const addItem = useGameStore(state => state.addItem);
+  const { upgrades } = usePokedexStore();
 
   const outcomes = [
-    { label: 'Masterball', action: () => addItem('masterballs', 1) },
-    { label: 'Rare Candy', action: () => addItem('rarecandies', 1) },
-    { label: '100 Gold', action: () => addItem('gold', 100) },
-    { label: '3x PokéBall', action: () => addItem('pokeballs', 3) },
-    { label: 'Nothing...', action: () => {} },
-    { label: 'Nothing...', action: () => {} },
+    { label: 'Masterball', action: () => addItem('masterballs', 1), weight: 1 + (upgrades.lucky_wheel * 0.5) },
+    { label: 'Rare Candy', action: () => addItem('rarecandies', 1), weight: 2 + (upgrades.lucky_wheel * 0.5) },
+    { label: '100 Gold', action: () => addItem('gold', 100), weight: 4 },
+    { label: '3x PokéBall', action: () => addItem('pokeballs', 3), weight: 5 },
+    { label: 'Nothing...', action: () => {}, weight: Math.max(1, 10 - upgrades.lucky_wheel) },
   ];
 
   const spin = () => {
@@ -23,8 +23,17 @@ const WheelOfFortune: React.FC<{ onComplete: () => void }> = ({ onComplete }) =>
 
     // Fake spin delay
     setTimeout(() => {
-      const idx = Math.floor(Math.random() * outcomes.length);
-      const chosen = outcomes[idx];
+      const totalWeight = outcomes.reduce((sum, o) => sum + o.weight, 0);
+      let rand = Math.random() * totalWeight;
+      let chosen = outcomes[0];
+      for (const option of outcomes) {
+        if (rand < option.weight) {
+          chosen = option;
+          break;
+        }
+        rand -= option.weight;
+      }
+
       chosen.action();
       setResult(chosen.label);
     }, 2000);

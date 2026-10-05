@@ -1,8 +1,15 @@
-import React from 'react';
-import { useGameStore } from '../../store/gameStore';
+import React, { useState } from 'react';
+import { useGameStore, usePokedexStore } from '../../store/gameStore';
+import MetaShop from './MetaShop';
 
 const MainMenu: React.FC = () => {
   const setGameState = useGameStore(state => state.setGameState);
+  const { tokens } = usePokedexStore();
+  const [showMetaShop, setShowMetaShop] = useState(false);
+
+  if (showMetaShop) {
+    return <MetaShop onBack={() => setShowMetaShop(false)} />;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full space-y-12 p-6">
@@ -19,12 +26,22 @@ const MainMenu: React.FC = () => {
         <p className="text-sm text-gray-300 font-sans mb-8 text-center font-light">
           A seamless blend of modern glassmorphism and retro mechanics.
         </p>
-        <button
-          className="poke-btn w-full text-lg py-4 font-semibold tracking-wide bg-white text-black hover:bg-gray-200 border-none"
-          onClick={() => setGameState('STARTER_SELECTION')}
-        >
-          Begin Journey
-        </button>
+        <div className="w-full flex flex-col gap-3">
+          <button
+            className="poke-btn w-full text-lg py-4 font-semibold tracking-wide bg-white text-black hover:bg-gray-200 border-none"
+            onClick={() => setGameState('STARTER_SELECTION')}
+          >
+            Begin Journey
+          </button>
+
+          <button
+            className="poke-btn w-full text-sm py-3 font-semibold tracking-wide bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 border-yellow-500/30 flex justify-between items-center px-6"
+            onClick={() => setShowMetaShop(true)}
+          >
+            <span>Upgrades</span>
+            <span className="font-retro text-[10px]">{tokens} T</span>
+          </button>
+        </div>
       </div>
     </div>
   );
