@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { GameState, Inventory, Pokemon, Pokedex, MapNode, NodeType } from '../types/game';
+import type { GameState, Inventory, Pokemon, Pokedex, MapNode, NodeType, WeatherType } from '../types/game';
 
 interface GameStoreState {
   // Game State
@@ -30,6 +30,9 @@ interface GameStoreState {
 
   currentEnemy: Pokemon | null;
   setCurrentEnemy: (enemy: Pokemon | null) => void;
+
+  weather: WeatherType;
+  setWeather: (w: WeatherType) => void;
 }
 
 interface PersistentStoreState {
@@ -59,6 +62,7 @@ const initialInventory: Inventory = {
   lifeorbs: 0,
   choicebands: 0,
   focussashes: 0,
+  megastones: 0,
 };
 
 // Main Game Store (Non-persistent)
@@ -147,20 +151,33 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       let newExp = p.exp + amount;
       let newLevel = p.level;
       let newMaxHp = p.maxHp;
-      const newStats = { ...p.stats };
-
       // Level up logic (threshold: level * 100)
+      let leveledUp = false;
       while (newExp >= newLevel * 100) {
         newExp -= newLevel * 100;
         newLevel++;
-        // +5% stats per level
-        newMaxHp = Math.floor(newMaxHp * 1.05);
-        newStats.hp = Math.floor(newStats.hp * 1.05);
-        newStats.attack = Math.floor(newStats.attack * 1.05);
-        newStats.defense = Math.floor(newStats.defense * 1.05);
-        newStats.specialAttack = Math.floor(newStats.specialAttack * 1.05);
-        newStats.specialDefense = Math.floor(newStats.specialDefense * 1.05);
-        newStats.speed = Math.floor(newStats.speed * 1.05);
+        leveledUp = true;
+      }
+
+      // We will recalculate stats purely from baseStats, IVs, EVs and newLevel
+      // Note: we can't do this purely in store without duplicating the calculateStat formula,
+      // but it's simpler to just duplicate the math here to keep it contained.
+      const calcStat = (base: number, iv: number, ev: number, level: number, isHp: boolean = false) => {
+        const core = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100);
+        return isHp ? core + level + 10 : core + 5;
+      };
+
+      let newStats = { ...p.stats };
+      if (leveledUp) {
+        newStats = {
+          hp: calcStat(p.baseStats.hp, p.ivs.hp, p.evs.hp, newLevel, true),
+          attack: calcStat(p.baseStats.attack, p.ivs.attack, p.evs.attack, newLevel),
+          defense: calcStat(p.baseStats.defense, p.ivs.defense, p.evs.defense, newLevel),
+          specialAttack: calcStat(p.baseStats.specialAttack, p.ivs.specialAttack, p.evs.specialAttack, newLevel),
+          specialDefense: calcStat(p.baseStats.specialDefense, p.ivs.specialDefense, p.evs.specialDefense, newLevel),
+          speed: calcStat(p.baseStats.speed, p.ivs.speed, p.evs.speed, newLevel),
+        };
+        newMaxHp = newStats.hp;
       }
 
       newParty[index] = {
@@ -230,10 +247,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     stage: 1,
     currentNodes: [],
     currentEnemy: null,
+    weather: 'none',
   }),
 
   currentEnemy: null,
   setCurrentEnemy: (enemy) => set({ currentEnemy: enemy }),
+
+  weather: 'none',
+  setWeather: (w) => set({ weather: w }),
 }));
 
 // Persistent Store (Pokedex only)

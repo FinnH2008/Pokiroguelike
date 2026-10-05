@@ -21,6 +21,7 @@ export interface PokemonType {
 }
 
 export type StatusAilment = 'burn' | 'poison' | 'paralysis' | 'sleep' | 'freeze';
+export type WeatherType = 'none' | 'sun' | 'rain' | 'sandstorm' | 'hail';
 
 export interface Move {
   name: string;
@@ -45,6 +46,22 @@ export interface Pokemon {
   maxHp: number;
   currentHp: number;
   stats: {
+    hp: number;
+    attack: number;
+    defense: number;
+    specialAttack: number;
+    specialDefense: number;
+    speed: number;
+  };
+  evs: {
+    hp: number;
+    attack: number;
+    defense: number;
+    specialAttack: number;
+    specialDefense: number;
+    speed: number;
+  };
+  baseStats: {
     hp: number;
     attack: number;
     defense: number;
@@ -92,6 +109,7 @@ export interface Inventory {
   lifeorbs: number;
   choicebands: number;
   focussashes: number;
+  megastones: number;
 }
 
 export interface PokedexEntry {

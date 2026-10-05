@@ -8,7 +8,7 @@ import Tooltip from '../ui/Tooltip';
 import { Swords, Backpack, Users, PersonStanding } from 'lucide-react';
 
 const Combat: React.FC = () => {
-  const { currentEnemy, party, inventory, removeItem, addPokemonToParty, setGameState, gainExp, floor } = useGameStore();
+  const { currentEnemy, party, inventory, removeItem, addPokemonToParty, setGameState, gainExp, floor, weather } = useGameStore();
   const combatBgStyle = getCombatBackground(getBiomeForFloor(floor));
   const { markSeen, markCaught } = usePokedexStore();
 
@@ -23,6 +23,14 @@ const Combat: React.FC = () => {
   const [flash, setFlash] = useState(false);
 
   const [menuState, setMenuState] = useState<'FIGHT' | 'BAG' | 'POKEMON' | 'MAIN'>('MAIN');
+
+  // Track if current player pokemon has mega evolved this battle
+  const [hasMegaEvolved, setHasMegaEvolved] = useState(false);
+
+  // Reset mega state when switching
+  useEffect(() => {
+    setHasMegaEvolved(false);
+  }, [activePlayerIdx]);
 
   useEffect(() => {
     if (enemy) {
@@ -53,6 +61,18 @@ const Combat: React.FC = () => {
       const dmg = Math.floor(poke.maxHp / 8);
       currentHp -= dmg;
       setLog(`${poke.name} is hurt by its ${poke.status}!`);
+    }
+
+    // Weather Damage
+    if (weather === 'sandstorm' && !poke.types.includes('rock') && !poke.types.includes('ground') && !poke.types.includes('steel')) {
+      const dmg = Math.floor(poke.maxHp / 16);
+      currentHp -= dmg;
+      setLog(`${poke.name} is buffeted by the sandstorm!`);
+    }
+    if (weather === 'hail' && !poke.types.includes('ice')) {
+      const dmg = Math.floor(poke.maxHp / 16);
+      currentHp -= dmg;
+      setLog(`${poke.name} is pelted by hail!`);
     }
 
     // Held Item Healing
@@ -147,6 +167,16 @@ const Combat: React.FC = () => {
     if (attacker.heldItem === 'lifeorbs') baseDmg *= 1.3;
     if (attacker.heldItem === 'choicebands' && isPhysical) baseDmg *= 1.5;
 
+    // Weather modifiers
+    if (weather === 'sun') {
+      if (move.type === 'fire') baseDmg *= 1.5;
+      if (move.type === 'water') baseDmg *= 0.5;
+    }
+    if (weather === 'rain') {
+      if (move.type === 'water') baseDmg *= 1.5;
+      if (move.type === 'fire') baseDmg *= 0.5;
+    }
+
     const stab = attacker.types.includes(move.type) ? 1.5 : 1;
     const typeEff = await getTypeEffectiveness(move.type, defender.types);
 
@@ -215,6 +245,42 @@ const Combat: React.FC = () => {
     }
   };
 
+  const handleMegaEvolve = async () => {
+    if (!playerPokemon || playerPokemon.heldItem !== 'megastones' || hasMegaEvolved) return;
+
+    setMenuState('MAIN');
+    setLog(`${playerPokemon.name} is reacting to its Mega Stone!`);
+    await new Promise(r => setTimeout(r, 1500));
+
+    triggerFlash();
+    setHasMegaEvolved(true);
+    setLog(`${playerPokemon.name} Mega Evolved!`);
+
+    // In a real app we'd fetch the mega form via PokeAPI (e.g., `-mega` or `-mega-x`),
+    // but not all pokemon have mega forms. We will simulate a massive stat boost and color change.
+    // For full realism, you would query `axios.get(https://pokeapi.co/api/v2/pokemon/${playerPokemon.name}-mega)`
+    // If it fails, fallback. Here we just apply a generic +30% to all stats and add a glow to the sprite to guarantee it works.
+
+    const megaStats = {
+      hp: Math.floor(playerPokemon.stats.hp * 1.3),
+      attack: Math.floor(playerPokemon.stats.attack * 1.3),
+      defense: Math.floor(playerPokemon.stats.defense * 1.3),
+      specialAttack: Math.floor(playerPokemon.stats.specialAttack * 1.3),
+      specialDefense: Math.floor(playerPokemon.stats.specialDefense * 1.3),
+      speed: Math.floor(playerPokemon.stats.speed * 1.3),
+    };
+
+    // We update the active pokemon with these buffed stats temporarily
+    useGameStore.getState().updatePokemon(activePlayerIdx, {
+      stats: megaStats,
+      maxHp: Math.floor(playerPokemon.maxHp * 1.3),
+      currentHp: Math.floor(playerPokemon.currentHp * 1.3)
+    });
+
+    await new Promise(r => setTimeout(r, 1500));
+    setMenuState('FIGHT');
+  };
+
   const handleAttack = async (moveIndex: number, isStruggle: boolean = false) => {
     if (!enemy || !playerPokemon) return;
 
@@ -264,6 +330,16 @@ const Combat: React.FC = () => {
     if (newEnemyHp <= 0) {
       setLog(`Enemy ${enemy.name} fainted! You won!`);
       const expGain = Math.floor((enemy.level * 50) / 7);
+
+      // Simple EV gain logic: +1 to highest base stat of the enemy (simplified for roguelike speed)
+      const maxStat = Object.keys(enemy.baseStats).reduce((a, b) =>
+        enemy.baseStats[a as keyof typeof enemy.baseStats] > enemy.baseStats[b as keyof typeof enemy.baseStats] ? a : b
+      );
+
+      const pPoke = useGameStore.getState().party[activePlayerIdx];
+      const newEvs = { ...pPoke.evs, [maxStat]: Math.min(252, pPoke.evs[maxStat as keyof typeof pPoke.evs] + 1) };
+      useGameStore.getState().updatePokemon(activePlayerIdx, { evs: newEvs });
+
       gainExp(activePlayerIdx, expGain);
 
       setTimeout(() => {
@@ -368,8 +444,23 @@ const Combat: React.FC = () => {
         {flash && <motion.div initial={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-white z-50 pointer-events-none" />}
       </AnimatePresence>
 
+      {/* Weather Overlay */}
+      {weather !== 'none' && (
+        <div className={`absolute inset-0 pointer-events-none z-0 ${
+          weather === 'rain' ? 'bg-blue-500/20 mix-blend-overlay' :
+          weather === 'sun' ? 'bg-orange-500/20 mix-blend-overlay' :
+          weather === 'sandstorm' ? 'bg-yellow-700/30' :
+          weather === 'hail' ? 'bg-white/30' : ''
+        }`} />
+      )}
+
       {/* Main Battle Scene (Left / Top) */}
       <div className="flex-1 relative flex flex-col justify-between p-6 sm:p-12 z-10">
+        {weather !== 'none' && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-sans uppercase tracking-widest border border-white/10">
+            Weather: {weather}
+          </div>
+        )}
 
         {/* Enemy Area (Top Right) */}
         <div className="flex justify-end w-full relative">
@@ -404,7 +495,7 @@ const Combat: React.FC = () => {
             className="absolute bottom-24 left-4 sm:left-16"
           >
              {playerPokemon.isShiny && <div className="absolute -top-4 -left-4 text-yellow-400 animate-pulse text-2xl">✨</div>}
-             <img src={playerPokemon.sprites.back} className={`w-48 h-48 sm:w-72 sm:h-72 pixelated drop-shadow-2xl ${playerShake ? 'brightness-200 sepia saturate-200 hue-rotate-[-50deg]' : ''}`} />
+             <img src={playerPokemon.sprites.back} className={`w-48 h-48 sm:w-72 sm:h-72 pixelated drop-shadow-2xl transition-all duration-1000 ${playerShake ? 'brightness-200 sepia saturate-200 hue-rotate-[-50deg]' : ''} ${hasMegaEvolved ? 'drop-shadow-[0_0_30px_rgba(0,255,255,0.8)] scale-110 hue-rotate-15' : ''}`} />
              {/* Ground shadow */}
              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black/40 rounded-[100%] blur-sm"></div>
           </motion.div>
@@ -454,7 +545,15 @@ const Combat: React.FC = () => {
           )}
 
           {menuState === 'FIGHT' && (
-            <div className="flex flex-col gap-2 h-full">
+            <div className="flex flex-col gap-2 h-full relative">
+              {playerPokemon.heldItem === 'megastones' && !hasMegaEvolved && (
+                <button
+                  onClick={handleMegaEvolve}
+                  className="absolute -top-12 left-1/2 -translate-x-1/2 poke-btn !bg-cyan-900/80 !border-cyan-400 !text-cyan-100 hover:!bg-cyan-800/80 !py-1 !px-4 text-[10px] font-retro flex items-center gap-2 shadow-[0_0_15px_rgba(0,255,255,0.5)] animate-pulse hover:animate-none"
+                >
+                  <span className="text-lg">✨</span> MEGA EVOLVE
+                </button>
+              )}
               {playerPokemon.moves.every(m => m.pp === 0) ? (
                 <div className="flex-1 flex items-center justify-center">
                   <button className="poke-btn w-full !bg-red-900/40 text-red-200 border-red-500" onClick={() => handleAttack(0, true)}>
@@ -462,7 +561,7 @@ const Combat: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 flex-1">
+                <div className="grid grid-cols-2 gap-2 flex-1 mt-2">
                   {playerPokemon.moves.map((m, i) => (
                     <Tooltip key={i} content={`Power: ${m.power || '-'} | Acc: ${m.accuracy || '-'}%`} side="top">
                       <button

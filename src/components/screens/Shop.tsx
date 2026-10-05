@@ -180,6 +180,21 @@ const Shop: React.FC = () => {
             </div>
           </Tooltip>
 
+          <Tooltip content="Equippable: Allows a fully evolved Pokémon to Mega Evolve in combat." side="top">
+            <div className="bg-white/5 rounded-xl p-4 border border-white/5 flex justify-between items-center group hover:bg-white/10 transition-colors cursor-default">
+              <div className="flex items-center gap-3">
+                <img src={ITEM_SPRITES.megastones} alt="Mega Stone" className="w-8 h-8 pixelated" />
+                <div>
+                  <div className="text-base font-sans font-medium text-cyan-400">Mega Stone</div>
+                  <div className="text-[10px] text-gray-400 font-sans mt-1">Mega Evolution</div>
+                </div>
+              </div>
+              <button aria-label="Buy Mega Stone for 1000 Gold" className={`poke-btn !py-2 !px-4 text-sm ${inventory.gold < 1000 ? 'opacity-50 cursor-not-allowed' : 'hover:!bg-cyan-400 hover:text-black hover:border-cyan-400'}`} onClick={() => buyItem('megastones', 1000)} disabled={inventory.gold < 1000}>
+                1000 G
+              </button>
+            </div>
+          </Tooltip>
+
         </div>
 
         <div className="flex gap-4 mt-auto">

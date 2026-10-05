@@ -18,6 +18,7 @@ export const ITEM_SPRITES: Record<string, string> = {
   lifeorbs: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/life-orb.png',
   choicebands: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/choice-band.png',
   focussashes: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/focus-sash.png',
+  megastones: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/mega-ring.png',
 };
 
 // We don't necessarily need to fetch from API every time since the URLs are predictable,

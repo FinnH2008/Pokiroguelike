@@ -8,11 +8,11 @@ export const getRandomInt = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-// Calculate stat based on original formula but simplified
-// HP: (2 * Base + IV) * Level / 100 + Level + 10
-// Other: (2 * Base + IV) * Level / 100 + 5
-const calculateStat = (base: number, iv: number, level: number, isHp: boolean = false) => {
-  const core = Math.floor(((2 * base + iv) * level) / 100);
+// Calculate stat based on original formula Gen III+
+// HP: Math.floor( ( (2 * Base + IV + Math.floor(EV / 4)) * Level ) / 100 ) + Level + 10
+// Other: Math.floor( ( (2 * Base + IV + Math.floor(EV / 4)) * Level ) / 100 ) + 5
+export const calculateStat = (base: number, iv: number, ev: number, level: number, isHp: boolean = false) => {
+  const core = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100);
   return isHp ? core + level + 10 : core + 5;
 };
 
@@ -33,6 +33,16 @@ export const fetchPokemonData = async (idOrName: number | string, level: number 
     speed: getRandomInt(0, 31),
   };
 
+  // EVs start at 0 for fresh/wild encounters
+  const evs = {
+    hp: 0,
+    attack: 0,
+    defense: 0,
+    specialAttack: 0,
+    specialDefense: 0,
+    speed: 0,
+  };
+
   // Get base stats
   const baseStats = {
     hp: data.stats.find((s: any) => s.stat.name === 'hp').base_stat,
@@ -45,12 +55,12 @@ export const fetchPokemonData = async (idOrName: number | string, level: number 
 
   // Calculate actual stats for the given level
   const stats = {
-    hp: calculateStat(baseStats.hp, ivs.hp, level, true),
-    attack: calculateStat(baseStats.attack, ivs.attack, level),
-    defense: calculateStat(baseStats.defense, ivs.defense, level),
-    specialAttack: calculateStat(baseStats.specialAttack, ivs.specialAttack, level),
-    specialDefense: calculateStat(baseStats.specialDefense, ivs.specialDefense, level),
-    speed: calculateStat(baseStats.speed, ivs.speed, level),
+    hp: calculateStat(baseStats.hp, ivs.hp, evs.hp, level, true),
+    attack: calculateStat(baseStats.attack, ivs.attack, evs.attack, level),
+    defense: calculateStat(baseStats.defense, ivs.defense, evs.defense, level),
+    specialAttack: calculateStat(baseStats.specialAttack, ivs.specialAttack, evs.specialAttack, level),
+    specialDefense: calculateStat(baseStats.specialDefense, ivs.specialDefense, evs.specialDefense, level),
+    speed: calculateStat(baseStats.speed, ivs.speed, evs.speed, level),
   };
 
   const types = data.types.map((t: any) => t.type.name);
@@ -112,6 +122,8 @@ export const fetchPokemonData = async (idOrName: number | string, level: number 
     maxHp: stats.hp,
     currentHp: stats.hp,
     stats,
+    baseStats,
+    evs,
     ivs,
     types,
     moves: selectedMovesData,

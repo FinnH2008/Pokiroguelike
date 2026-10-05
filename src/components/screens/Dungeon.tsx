@@ -56,6 +56,16 @@ const Dungeon: React.FC = () => {
           const enemyLevel = Math.max(5, floor * 2 + stage + levelMod + Math.floor(Math.random() * 3));
           const enemy = await fetchPokemonData(enemyId, enemyLevel);
 
+          // Randomly assign weather based on biome (20% chance)
+          let weather: import('../../types/game').WeatherType = 'none';
+          if (Math.random() < 0.2) {
+            if (biome === 'WATER') weather = 'rain';
+            if (biome === 'VOLCANO') weather = 'sun';
+            if (biome === 'CAVE') weather = 'sandstorm';
+            if (biome === 'ICE') weather = 'hail';
+          }
+
+          useGameStore.getState().setWeather(weather);
           useGameStore.getState().setCurrentEnemy(enemy);
           useGameStore.getState().setGameState('COMBAT');
         } catch {
@@ -108,7 +118,7 @@ const Dungeon: React.FC = () => {
     e.stopPropagation();
     const poke = party[pokeIndex];
 
-    if (['leftovers', 'lifeorbs', 'choicebands', 'focussashes'].includes(itemType)) {
+    if (['leftovers', 'lifeorbs', 'choicebands', 'focussashes', 'megastones'].includes(itemType)) {
       if (removeItem(itemType, 1)) {
         // If already holding something, put it back in inventory
         if (poke.heldItem) {
@@ -241,6 +251,9 @@ const Dungeon: React.FC = () => {
                 )}
                 {inventory.focussashes > 0 && !p.heldItem && (
                   <button onClick={(e) => handleItemUse(e, idx, 'focussashes')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-orange-300 font-sans" title="Equip Focus Sash">Eq. Sash</button>
+                )}
+                {inventory.megastones > 0 && !p.heldItem && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'megastones')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-cyan-300 font-sans" title="Equip Mega Stone">Eq. Mega</button>
                 )}
                 {p.heldItem && (
                   <button onClick={(e) => {
