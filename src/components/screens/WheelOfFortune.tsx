@@ -31,35 +31,45 @@ const WheelOfFortune: React.FC<{ onComplete: () => void }> = ({ onComplete }) =>
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="poke-box flex flex-col items-center w-full max-w-sm text-center"
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="poke-box flex flex-col items-center w-full max-w-sm text-center !bg-black/80 !border-white/20 shadow-2xl"
       >
-        <h2 className="text-xl text-ds-hp-yellow mb-4">Mystery Wheel</h2>
+        <h2 className="text-xl font-retro text-purple-400 mb-2">Mystery Event</h2>
+        <p className="text-xs text-gray-400 font-sans mb-8">Test your luck!</p>
 
         {!result && (
           <>
             <motion.div
-              animate={spinning ? { rotate: 1080 } : {}}
-              transition={{ duration: 2, ease: "easeOut" }}
-              className="w-32 h-32 rounded-full border-4 border-ds-dark border-dashed flex items-center justify-center bg-white mb-6"
+              animate={spinning ? { rotate: 1440, scale: [1, 1.1, 1] } : {}}
+              transition={{ duration: 2.5, ease: "circOut" }}
+              className="w-40 h-40 rounded-full border-2 border-white/20 border-dashed flex items-center justify-center bg-white/5 mb-8 relative overflow-hidden"
             >
-              <span className="text-4xl">?</span>
+              {/* Fake wheel segments */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent"></div>
+              <span className="text-5xl font-retro text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]">?</span>
             </motion.div>
 
-            <button className="poke-btn mb-2 w-full" onClick={spin} disabled={spinning}>
-              {spinning ? 'Spinning...' : 'Spin!'}
+            <button className="poke-btn mb-2 w-full !bg-purple-600/30 hover:!bg-purple-600/50 !border-purple-500/50" onClick={spin} disabled={spinning}>
+              {spinning ? 'Spinning...' : 'SPIN THE WHEEL'}
             </button>
           </>
         )}
 
         {result && (
-          <div className="py-8">
-            <p className="text-lg mb-6">You got: <br/><span className="text-ds-hp-green">{result}</span></p>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="py-8 flex flex-col items-center"
+          >
+            <p className="text-sm text-gray-300 font-sans mb-2">You received:</p>
+            <p className="text-xl font-retro text-ds-hp-green mb-8 text-center leading-relaxed drop-shadow-[0_0_10px_rgba(52,199,89,0.5)]">
+              {result}
+            </p>
             <button className="poke-btn w-full" onClick={onComplete}>Continue</button>
-          </div>
+          </motion.div>
         )}
       </motion.div>
     </div>

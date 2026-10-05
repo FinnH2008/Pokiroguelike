@@ -49,34 +49,68 @@ const StarterSelection: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4 space-y-6">
-      <div className="poke-box text-center w-full max-w-2xl">
-        <h2 className="text-xl mb-4">Choose your Starter</h2>
+    <div className="flex flex-col items-center justify-center h-full w-full p-6 sm:p-12">
+      <div className="w-full max-w-4xl">
+
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-4xl text-white font-light tracking-wide mb-2 font-sans">
+            Select Your Starter
+          </h2>
+          <p className="text-gray-400 font-sans text-sm">Your journey begins with a single choice.</p>
+        </div>
 
         {options.length === 0 && !isLoading && (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-            <button className="poke-btn" onClick={handleShowClassic}>Classic (Gen 1)</button>
-            <button className="poke-btn" onClick={handleShowRandom}>Randomize</button>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mt-8">
+            <button className="poke-btn w-full sm:w-64 py-6 text-lg" onClick={handleShowClassic}>
+              Classic
+              <span className="block text-xs font-normal text-gray-400 mt-2 font-sans">Kanto Starters</span>
+            </button>
+            <button className="poke-btn w-full sm:w-64 py-6 text-lg bg-white/5 border-dashed" onClick={handleShowRandom}>
+              Randomize
+              <span className="block text-xs font-normal text-gray-400 mt-2 font-sans">Any Generation</span>
+            </button>
           </div>
         )}
 
         {isLoading && (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="animate-spin w-12 h-12 text-ds-hp-red" />
+          <div className="flex justify-center items-center py-24">
+            <Loader2 className="animate-spin w-12 h-12 text-white/50" />
           </div>
         )}
 
         {options.length > 0 && !isLoading && (
-          <div className="flex flex-wrap justify-center gap-6 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {options.map((poke) => (
-              <div key={poke.id} className="poke-box border-2 cursor-pointer hover:bg-gray-100 flex flex-col items-center"
-                   onClick={() => selectStarter(poke)}>
-                <img src={poke.sprites.front} alt={poke.name} className="w-24 h-24 pixelated" />
-                <p className="capitalize mt-2">{poke.name}</p>
-                <div className="flex gap-1 mt-1">
+              <div
+                key={poke.id}
+                className="poke-box cursor-pointer flex flex-col items-center group bg-white/5 hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-2 border-white/10 hover:border-white/30"
+                onClick={() => selectStarter(poke)}
+              >
+                <div className="w-32 h-32 mb-6 relative flex items-center justify-center bg-black/20 rounded-full shadow-inner">
+                  <img src={poke.sprites.front} alt={poke.name} className="w-32 h-32 pixelated relative z-10 drop-shadow-xl group-hover:scale-110 transition-transform duration-300" />
+                </div>
+
+                <h3 className="capitalize text-xl font-retro text-white tracking-widest mb-4 text-center leading-relaxed">
+                  {poke.name}
+                </h3>
+
+                <div className="flex gap-2 mb-4">
                   {poke.types.map(t => (
-                    <span key={t} className="text-[10px] bg-gray-200 px-1 rounded uppercase">{t}</span>
+                    <span key={t} className="text-[10px] font-sans font-semibold tracking-wider bg-black/30 border border-white/10 text-white/80 px-3 py-1 rounded-full uppercase">
+                      {t}
+                    </span>
                   ))}
+                </div>
+
+                <div className="w-full grid grid-cols-2 gap-2 mt-2 text-xs font-sans text-gray-400">
+                  <div className="bg-black/20 p-2 rounded-lg text-center">
+                    <span className="block text-[9px] uppercase tracking-wider mb-1 opacity-60">HP</span>
+                    {poke.stats.hp}
+                  </div>
+                  <div className="bg-black/20 p-2 rounded-lg text-center">
+                    <span className="block text-[9px] uppercase tracking-wider mb-1 opacity-60">ATK</span>
+                    {poke.stats.attack}
+                  </div>
                 </div>
               </div>
             ))}
@@ -84,8 +118,8 @@ const StarterSelection: React.FC = () => {
         )}
 
         {options.length > 0 && !isLoading && (
-          <div className="mt-8">
-             <button className="poke-btn text-xs" onClick={() => setOptions([])}>Back</button>
+          <div className="mt-12 flex justify-center">
+             <button className="poke-btn text-sm px-8" onClick={() => setOptions([])}>Cancel</button>
           </div>
         )}
       </div>

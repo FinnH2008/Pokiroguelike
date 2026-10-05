@@ -8,21 +8,22 @@ export default {
     extend: {
       colors: {
         ds: {
-          dark: '#282828',
-          panel: '#f8f8f8',
+          dark: '#1a1a1c',
+          panel: '#ffffff',
           hp: {
-            green: '#18c020',
-            yellow: '#f8d030',
-            red: '#f85838',
+            green: '#34c759', // Apple standard green
+            yellow: '#ffcc00', // Apple standard yellow
+            red: '#ff3b30', // Apple standard red
           }
         }
       },
       fontFamily: {
         retro: ['"Press Start 2P"', 'cursive'],
+        sans: ['"Inter"', 'sans-serif'],
       },
       boxShadow: {
-        ds: 'inset -4px -4px 0px 0px rgba(0,0,0,0.2), inset 4px 4px 0px 0px rgba(255,255,255,0.7)',
-        'ds-pressed': 'inset 4px 4px 0px 0px rgba(0,0,0,0.2)',
+        glass: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        'glass-pressed': '0 2px 10px 0 rgba(0, 0, 0, 0.2)',
       }
     },
   },

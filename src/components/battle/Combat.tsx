@@ -169,113 +169,143 @@ const Combat: React.FC = () => {
   if (!enemy || !playerPokemon) return <div className="text-white">Error loading combat</div>;
 
   return (
-    <div className="flex flex-col h-full bg-ds-panel text-ds-dark relative">
+    <div className="flex flex-col sm:flex-row h-full w-full relative overflow-hidden bg-gradient-to-b from-blue-900/40 to-black/80 text-white">
       <AnimatePresence>
         {flash && <motion.div initial={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-white z-50 pointer-events-none" />}
       </AnimatePresence>
 
-      {/* Battle Scene (Top Screen equivalent) */}
-      <div className="flex-1 bg-white relative border-b-4 border-ds-dark overflow-hidden flex flex-col justify-between p-4">
+      {/* Main Battle Scene (Left / Top) */}
+      <div className="flex-1 relative flex flex-col justify-between p-6 sm:p-12 z-10">
 
-        {/* Enemy UI (Top Right) */}
-        <div className="flex justify-end w-full">
-           <div className="poke-box !border-2 p-2 w-48 shadow-none bg-gray-50 rounded-bl-xl">
-             <div className="flex justify-between items-center">
-               <span className="uppercase text-[10px] font-bold">{enemy.name}</span>
-               <span className="text-[10px]">Lv{enemy.level}</span>
+        {/* Enemy Area (Top Right) */}
+        <div className="flex justify-end w-full relative">
+           <div className="w-64 bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-glass">
+             <div className="flex justify-between items-center mb-2">
+               <span className="uppercase text-sm font-retro">{enemy.name}</span>
+               <span className="text-xs font-sans text-gray-300">Lv{enemy.level}</span>
              </div>
-             <div className="w-full bg-gray-300 h-2 mt-1 rounded overflow-hidden">
-               <div className="bg-ds-hp-green h-full transition-all" style={{width: `${(enemy.currentHp/enemy.maxHp)*100}%`}} />
+             <div className="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
+               <div className="bg-ds-hp-green h-full rounded-full transition-all duration-300" style={{width: `${(enemy.currentHp/enemy.maxHp)*100}%`}} />
              </div>
            </div>
+
+           <motion.div
+            animate={enemyShake ? { x: [-10, 10, -10, 10, 0] } : { y: [0, -10, 0] }}
+            transition={enemyShake ? { duration: 0.5 } : { repeat: Infinity, duration: 4, ease: "easeInOut" }}
+            className="absolute top-24 right-12 sm:right-32"
+          >
+            {enemy.isShiny && <div className="absolute -top-4 -right-4 text-yellow-400 animate-pulse text-2xl">✨</div>}
+            <img src={enemy.sprites.front} className={`w-40 h-40 sm:w-56 sm:h-56 pixelated drop-shadow-2xl ${enemyShake ? 'brightness-200 sepia saturate-200 hue-rotate-[-50deg]' : ''}`} />
+            {/* Ground shadow */}
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-4 bg-black/40 rounded-[100%] blur-sm"></div>
+          </motion.div>
         </div>
-        <motion.div
-          animate={enemyShake ? { x: [-10, 10, -10, 10, 0] } : {}}
-          className="absolute top-12 right-8"
-        >
-          {enemy.isShiny && <div className="absolute -top-4 -right-4 text-yellow-400 animate-pulse">✨</div>}
-          <img src={enemy.sprites.front} className={`w-32 h-32 pixelated ${enemyShake ? 'brightness-200 sepia saturate-200 hue-rotate-[-50deg]' : ''}`} />
-        </motion.div>
 
-        {/* Player UI (Bottom Left) */}
-        <motion.div
-          animate={playerShake ? { x: [-10, 10, -10, 10, 0] } : {}}
-          className="absolute bottom-8 left-8"
-        >
-           {playerPokemon.isShiny && <div className="absolute -top-4 -left-4 text-yellow-400 animate-pulse">✨</div>}
-           <img src={playerPokemon.sprites.back} className={`w-32 h-32 pixelated ${playerShake ? 'brightness-200 sepia saturate-200 hue-rotate-[-50deg]' : ''}`} />
-        </motion.div>
 
-        <div className="flex justify-start w-full mt-auto relative z-10">
-           <div className="poke-box !border-2 p-2 w-48 shadow-none bg-gray-50 rounded-tr-xl">
-             <div className="flex justify-between items-center">
-               <span className="uppercase text-[10px] font-bold">{playerPokemon.name}</span>
-               <span className="text-[10px]">Lv{playerPokemon.level}</span>
+        {/* Player Area (Bottom Left) */}
+        <div className="flex justify-start w-full relative mt-auto">
+          <motion.div
+            animate={playerShake ? { x: [-10, 10, -10, 10, 0] } : { y: [0, -5, 0] }}
+            transition={playerShake ? { duration: 0.5 } : { repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            className="absolute bottom-24 left-4 sm:left-16"
+          >
+             {playerPokemon.isShiny && <div className="absolute -top-4 -left-4 text-yellow-400 animate-pulse text-2xl">✨</div>}
+             <img src={playerPokemon.sprites.back} className={`w-48 h-48 sm:w-72 sm:h-72 pixelated drop-shadow-2xl ${playerShake ? 'brightness-200 sepia saturate-200 hue-rotate-[-50deg]' : ''}`} />
+             {/* Ground shadow */}
+             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black/40 rounded-[100%] blur-sm"></div>
+          </motion.div>
+
+           <div className="w-64 bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-glass mt-auto z-20">
+             <div className="flex justify-between items-center mb-2">
+               <span className="uppercase text-sm font-retro">{playerPokemon.name}</span>
+               <span className="text-xs font-sans text-gray-300">Lv{playerPokemon.level}</span>
              </div>
-             <div className="w-full bg-gray-300 h-2 mt-1 rounded overflow-hidden">
-               <div className="bg-ds-hp-green h-full transition-all" style={{width: `${(playerPokemon.currentHp/playerPokemon.maxHp)*100}%`}} />
+             <div className="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
+               <div className="bg-ds-hp-green h-full rounded-full transition-all duration-300" style={{width: `${(playerPokemon.currentHp/playerPokemon.maxHp)*100}%`}} />
              </div>
-             <div className="text-right text-[8px] mt-1">{playerPokemon.currentHp}/{playerPokemon.maxHp}</div>
+             <div className="text-right text-xs font-sans mt-2 text-gray-300">{playerPokemon.currentHp} / {playerPokemon.maxHp} HP</div>
            </div>
         </div>
-
       </div>
 
-      {/* Touch Screen / Menus */}
-      <div className="h-48 bg-ds-dark p-2 flex flex-col">
-        <div className="poke-box flex-1 mb-2 flex items-center justify-center p-2 text-xs leading-relaxed text-center">
+      {/* Command Center (Right / Bottom) */}
+      <div className="w-full sm:w-[400px] h-[40%] sm:h-full bg-black/60 backdrop-blur-2xl border-t sm:border-t-0 sm:border-l border-white/10 flex flex-col p-6 z-20 overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+
+        {/* Battle Log */}
+        <div className="poke-box !bg-white/5 !p-4 flex-1 mb-6 flex items-center justify-center text-sm font-sans leading-relaxed text-center font-light border-white/5">
           {log}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 h-20">
+        {/* Action Menu */}
+        <div className="h-48 flex flex-col justify-end">
           {menuState === 'MAIN' && (
-            <>
-              <button className="poke-btn" onClick={() => setMenuState('FIGHT')}>Fight</button>
-              <button className="poke-btn" onClick={() => setMenuState('BAG')}>Bag</button>
-              <button className="poke-btn" onClick={() => setMenuState('POKEMON')}>Pokémon</button>
-              <button className="poke-btn" onClick={() => setGameState('DUNGEON')}>Run</button>
-            </>
+            <div className="grid grid-cols-2 gap-3">
+              <button className="poke-btn !py-4" onClick={() => setMenuState('FIGHT')}>Fight</button>
+              <button className="poke-btn !py-4" onClick={() => setMenuState('BAG')}>Bag</button>
+              <button className="poke-btn !py-4" onClick={() => setMenuState('POKEMON')}>Pokémon</button>
+              <button className="poke-btn !py-4 !bg-red-500/20 hover:!bg-red-500/40 !border-red-500/30 text-red-100" onClick={() => {
+                useGameStore.getState().advanceStage();
+                useGameStore.getState().generateNodes();
+                setGameState('DUNGEON');
+              }}>Run</button>
+            </div>
           )}
 
           {menuState === 'FIGHT' && (
-            <>
-              {playerPokemon.moves.map((m, i) => (
-                <button key={i} className="poke-btn text-[8px] sm:text-[10px] truncate" onClick={() => handleAttack(m)}>
-                  {m.name} ({m.type})
-                </button>
-              ))}
-              <button className="poke-btn text-[10px] col-span-2 mt-1 py-1" onClick={() => setMenuState('MAIN')}>Back</button>
-            </>
+            <div className="flex flex-col gap-2 h-full">
+              <div className="grid grid-cols-2 gap-2 flex-1">
+                {playerPokemon.moves.map((m, i) => (
+                  <button key={i} className="poke-btn flex flex-col items-center justify-center gap-1 !p-2" onClick={() => handleAttack(m)}>
+                    <span className="text-xs font-retro truncate w-full text-center">{m.name}</span>
+                    <span className="text-[9px] font-sans uppercase tracking-wider text-gray-400 bg-black/30 px-2 py-0.5 rounded-full">{m.type}</span>
+                  </button>
+                ))}
+              </div>
+              <button className="poke-btn !py-2 text-xs" onClick={() => setMenuState('MAIN')}>Back</button>
+            </div>
           )}
 
           {menuState === 'BAG' && (
-            <div className="col-span-2 grid grid-cols-3 gap-1 overflow-y-auto">
-              <button className="poke-btn text-[8px]" onClick={() => handleCatch('pokeballs')}>Pokeball ({inventory.pokeballs})</button>
-              <button className="poke-btn text-[8px]" onClick={() => handleCatch('masterballs')}>Masterball ({inventory.masterballs})</button>
-              <button className="poke-btn text-[8px]" onClick={handlePotion}>Potion ({inventory.potions})</button>
-              <button className="poke-btn text-[8px] col-span-3 mt-1 py-1" onClick={() => setMenuState('MAIN')}>Back</button>
+            <div className="flex flex-col gap-2 h-full">
+              <div className="grid grid-cols-1 gap-2 flex-1 overflow-y-auto no-scrollbar">
+                <button className="poke-btn flex justify-between items-center !p-3" onClick={() => handleCatch('pokeballs')} disabled={inventory.pokeballs <= 0}>
+                  <span>Pokéball</span> <span className="bg-black/40 px-2 py-1 rounded text-xs">{inventory.pokeballs}</span>
+                </button>
+                <button className="poke-btn flex justify-between items-center !p-3" onClick={() => handleCatch('masterballs')} disabled={inventory.masterballs <= 0}>
+                  <span className="text-purple-300">Masterball</span> <span className="bg-black/40 px-2 py-1 rounded text-xs">{inventory.masterballs}</span>
+                </button>
+                <button className="poke-btn flex justify-between items-center !p-3" onClick={handlePotion} disabled={inventory.potions <= 0}>
+                  <span className="text-green-300">Potion (20HP)</span> <span className="bg-black/40 px-2 py-1 rounded text-xs">{inventory.potions}</span>
+                </button>
+              </div>
+              <button className="poke-btn !py-2 text-xs" onClick={() => setMenuState('MAIN')}>Back</button>
             </div>
           )}
 
           {menuState === 'POKEMON' && (
-            <div className="col-span-2 grid grid-cols-3 gap-1 overflow-y-auto max-h-full">
-              {party.map((p, idx) => (
-                <button
-                  key={idx}
-                  disabled={p.currentHp <= 0}
-                  className={`poke-btn text-[8px] ${p.currentHp <= 0 ? 'opacity-50' : ''}`}
-                  onClick={() => {
-                    setActivePlayerIdx(idx);
-                    setMenuState('MAIN');
-                    setLog(`Go! ${p.name}!`);
-                    // Skip turn when switching
-                    setTimeout(() => enemyTurn(p, enemy), 1500);
-                  }}
-                >
-                  {p.name}
-                </button>
-              ))}
-              <button className="poke-btn text-[8px] col-span-3 mt-1 py-1" onClick={() => setMenuState('MAIN')}>Back</button>
+            <div className="flex flex-col gap-2 h-full">
+              <div className="grid grid-cols-1 gap-2 flex-1 overflow-y-auto no-scrollbar">
+                {party.map((p, idx) => (
+                  <button
+                    key={idx}
+                    disabled={p.currentHp <= 0}
+                    className={`poke-btn flex items-center gap-3 !p-2 ${p.currentHp <= 0 ? 'opacity-30' : ''}`}
+                    onClick={() => {
+                      setActivePlayerIdx(idx);
+                      setMenuState('MAIN');
+                      setLog(`Go! ${p.name}!`);
+                      setTimeout(() => enemyTurn(p, enemy), 1500);
+                    }}
+                  >
+                    <img src={p.sprites.front} className="w-8 h-8 pixelated" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-xs font-retro uppercase">{p.name}</span>
+                      <span className="text-[10px] font-sans text-gray-400">HP: {p.currentHp}/{p.maxHp}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <button className="poke-btn !py-2 text-xs" onClick={() => setMenuState('MAIN')}>Back</button>
             </div>
           )}
         </div>

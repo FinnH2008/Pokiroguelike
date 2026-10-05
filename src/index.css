@@ -4,21 +4,34 @@
 
 @layer components {
   .poke-box {
-    @apply bg-ds-panel text-ds-dark font-retro p-4 rounded-lg shadow-ds border-4 border-ds-dark;
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 text-white font-sans p-6 rounded-3xl shadow-glass;
   }
 
   .poke-btn {
-    @apply bg-ds-panel text-ds-dark font-retro py-2 px-4 rounded-lg shadow-ds border-4 border-ds-dark active:shadow-ds-pressed transition-all duration-75 text-xs sm:text-sm hover:bg-gray-100;
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 text-white font-sans font-medium py-3 px-6 rounded-2xl shadow-glass hover:bg-white/20 active:shadow-glass-pressed active:scale-95 transition-all duration-200 text-sm sm:text-base cursor-pointer;
   }
 
   .pixelated {
     image-rendering: pixelated;
   }
+
+  /* Scrollbar hiding for modern look */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 body {
-  @apply bg-ds-dark text-white font-retro;
+  @apply bg-ds-dark text-white font-sans;
   margin: 0;
-  overflow: hidden; /* Prevent scrolling, DS feel */
+  overflow: hidden;
   touch-action: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Press Start 2P", cursive;
 }
