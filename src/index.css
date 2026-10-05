@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .poke-box {
+    @apply bg-ds-panel text-ds-dark font-retro p-4 rounded-lg shadow-ds border-4 border-ds-dark;
+  }
+
+  .poke-btn {
+    @apply bg-ds-panel text-ds-dark font-retro py-2 px-4 rounded-lg shadow-ds border-4 border-ds-dark active:shadow-ds-pressed transition-all duration-75 text-xs sm:text-sm hover:bg-gray-100;
+  }
+
+  .pixelated {
+    image-rendering: pixelated;
+  }
+}
+
+body {
+  @apply bg-ds-dark text-white font-retro;
+  margin: 0;
+  overflow: hidden; /* Prevent scrolling, DS feel */
+  touch-action: none;
+}
