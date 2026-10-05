@@ -73,12 +73,15 @@ export const fetchPokemonData = async (idOrName: number | string, level: number 
       const moveData = moveRes.data;
 
       if (moveData.power && moveData.power > 0) {
+        const maxPp = moveData.pp || 15;
         selectedMovesData.push({
           name: moveData.name,
           power: moveData.power,
           type: moveData.type.name,
           accuracy: moveData.accuracy || 100,
           damage_class: moveData.damage_class.name,
+          pp: maxPp,
+          maxPp: maxPp,
         });
       }
     } catch (e) {
@@ -93,7 +96,9 @@ export const fetchPokemonData = async (idOrName: number | string, level: number 
       power: 40,
       type: 'normal',
       accuracy: 100,
-      damage_class: 'physical'
+      damage_class: 'physical',
+      pp: 35,
+      maxPp: 35,
     });
   }
 

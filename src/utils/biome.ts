@@ -32,6 +32,18 @@ export const getBiomeBackground = (biome: BiomeType): React.CSSProperties => {
   }
 };
 
+export const getCombatBackground = (biome: BiomeType): React.CSSProperties => {
+  switch(biome) {
+    case 'GRASS': return { background: 'linear-gradient(to bottom, #4facfe 0%, #00f2fe 50%, #43e97b 50%, #38f9d7 100%)' };
+    case 'CAVE': return { background: 'linear-gradient(to bottom, #434343 0%, black 50%, #594f4f 50%, #544a4a 100%)' };
+    case 'WATER': return { background: 'linear-gradient(to bottom, #89f7fe 0%, #66a6ff 50%, #09203f 50%, #537895 100%)' };
+    case 'CITY': return { background: 'linear-gradient(to bottom, #6a85b6 0%, #bac8e0 50%, #2c3e50 50%, #3498db 100%)' };
+    case 'VOLCANO': return { background: 'linear-gradient(to bottom, #16222A 0%, #3A6073 50%, #870000 50%, #190A05 100%)' };
+    case 'ICE': return { background: 'linear-gradient(to bottom, #e0c3fc 0%, #8ec5fc 50%, #E0EAFC 50%, #CFDEF3 100%)' };
+    default: return { background: 'linear-gradient(to bottom, #29323c 0%, #485563 100%)' };
+  }
+};
+
 // Types mapped to biomes to get theme-appropriate random pokemon
 export const getTypesForBiome = (biome: BiomeType): string[] => {
   switch(biome) {

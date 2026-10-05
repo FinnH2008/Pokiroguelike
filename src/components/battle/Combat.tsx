@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore, usePokedexStore } from '../../store/gameStore';
 import { getTypeEffectiveness, getRandomInt } from '../../services/api';
+import { getBiomeForFloor, getCombatBackground } from '../../utils/biome';
 import type { Pokemon, Move } from '../../types/game';
 import Tooltip from '../ui/Tooltip';
+import { Swords, Backpack, Users, PersonStanding } from 'lucide-react';
 
 const Combat: React.FC = () => {
-  const { currentEnemy, party, inventory, removeItem, addPokemonToParty, setGameState, gainExp } = useGameStore();
+  const { currentEnemy, party, inventory, removeItem, addPokemonToParty, setGameState, gainExp, floor } = useGameStore();
+  const combatBgStyle = getCombatBackground(getBiomeForFloor(floor));
   const { markSeen, markCaught } = usePokedexStore();
 
   const [activePlayerIdx, setActivePlayerIdx] = useState(0);
@@ -93,10 +96,31 @@ const Combat: React.FC = () => {
     }
   };
 
-  const handleAttack = async (move: Move) => {
+  const handleAttack = async (moveIndex: number, isStruggle: boolean = false) => {
     if (!enemy || !playerPokemon) return;
-    setMenuState('MAIN'); // hide menus
 
+    let move = playerPokemon.moves[moveIndex];
+
+    if (isStruggle) {
+      move = {
+        name: 'struggle',
+        power: 50,
+        type: 'normal',
+        accuracy: 100,
+        damage_class: 'physical',
+        pp: 1,
+        maxPp: 1
+      };
+    } else {
+      if (move.pp <= 0) return;
+
+      // Deduct PP
+      const newMoves = [...playerPokemon.moves];
+      newMoves[moveIndex] = { ...move, pp: move.pp - 1 };
+      useGameStore.getState().updatePokemon(activePlayerIdx, { moves: newMoves });
+    }
+
+    setMenuState('MAIN'); // hide menus
     setLog(`${playerPokemon.name} used ${move.name}!`);
     await new Promise(r => setTimeout(r, 1000));
 
@@ -199,7 +223,7 @@ const Combat: React.FC = () => {
   if (!enemy || !playerPokemon) return <div className="text-white">Error loading combat</div>;
 
   return (
-    <div className="flex flex-col sm:flex-row h-full w-full relative overflow-hidden bg-gradient-to-b from-blue-900/40 to-black/80 text-white">
+    <div className="flex flex-col sm:flex-row h-full w-full relative overflow-hidden text-white" style={combatBgStyle}>
       <AnimatePresence>
         {flash && <motion.div initial={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-white z-50 pointer-events-none" />}
       </AnimatePresence>
@@ -270,29 +294,52 @@ const Combat: React.FC = () => {
         <div className="h-48 flex flex-col justify-end">
           {menuState === 'MAIN' && (
             <div className="grid grid-cols-2 gap-3">
-              <button className="poke-btn !py-4" onClick={() => setMenuState('FIGHT')}>Fight</button>
-              <button className="poke-btn !py-4" onClick={() => setMenuState('BAG')}>Bag</button>
-              <button className="poke-btn !py-4" onClick={() => setMenuState('POKEMON')}>Pokémon</button>
-              <button className="poke-btn !py-4 !bg-red-500/20 hover:!bg-red-500/40 !border-red-500/30 text-red-100" onClick={() => {
+              <button className="poke-btn !py-4 flex flex-col items-center gap-2 group" onClick={() => setMenuState('FIGHT')}>
+                <Swords size={20} className="text-red-400 group-hover:scale-110 transition-transform" /> Fight
+              </button>
+              <button className="poke-btn !py-4 flex flex-col items-center gap-2 group" onClick={() => setMenuState('BAG')}>
+                <Backpack size={20} className="text-yellow-400 group-hover:scale-110 transition-transform" /> Bag
+              </button>
+              <button className="poke-btn !py-4 flex flex-col items-center gap-2 group" onClick={() => setMenuState('POKEMON')}>
+                <Users size={20} className="text-blue-400 group-hover:scale-110 transition-transform" /> Pokémon
+              </button>
+              <button className="poke-btn !py-4 flex flex-col items-center gap-2 group !bg-red-500/10 hover:!bg-red-500/20 !border-red-500/30 text-red-100" onClick={() => {
                 useGameStore.getState().advanceStage();
                 useGameStore.getState().generateNodes();
                 setGameState('DUNGEON');
-              }}>Run</button>
+              }}>
+                <PersonStanding size={20} className="text-red-400 group-hover:scale-110 transition-transform" /> Run
+              </button>
             </div>
           )}
 
           {menuState === 'FIGHT' && (
             <div className="flex flex-col gap-2 h-full">
-              <div className="grid grid-cols-2 gap-2 flex-1">
-                {playerPokemon.moves.map((m, i) => (
-                  <Tooltip key={i} content={`Power: ${m.power || '-'} | Acc: ${m.accuracy || '-'}%`} side="top">
-                    <button className="poke-btn flex flex-col items-center justify-center gap-1 !p-2 w-full h-full" onClick={() => handleAttack(m)}>
-                      <span className="text-xs font-retro truncate w-full text-center">{m.name}</span>
-                      <span className="text-[9px] font-sans uppercase tracking-wider text-gray-400 bg-black/30 px-2 py-0.5 rounded-full">{m.type}</span>
-                    </button>
-                  </Tooltip>
-                ))}
-              </div>
+              {playerPokemon.moves.every(m => m.pp === 0) ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <button className="poke-btn w-full !bg-red-900/40 text-red-200 border-red-500" onClick={() => handleAttack(0, true)}>
+                    Use Struggle!
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 flex-1">
+                  {playerPokemon.moves.map((m, i) => (
+                    <Tooltip key={i} content={`Power: ${m.power || '-'} | Acc: ${m.accuracy || '-'}%`} side="top">
+                      <button
+                        className={`poke-btn flex flex-col items-center justify-center gap-1 !p-2 w-full h-full ${m.pp <= 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+                        onClick={() => m.pp > 0 && handleAttack(i)}
+                        disabled={m.pp <= 0}
+                      >
+                        <span className="text-[10px] sm:text-xs font-retro truncate w-full text-center">{m.name}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[9px] font-sans uppercase tracking-wider text-gray-400 bg-black/30 px-2 py-0.5 rounded-full">{m.type}</span>
+                          <span className={`text-[9px] font-sans ${m.pp === 0 ? 'text-red-400' : 'text-gray-300'}`}>PP: {m.pp}/{m.maxPp}</span>
+                        </div>
+                      </button>
+                    </Tooltip>
+                  ))}
+                </div>
+              )}
               <button className="poke-btn !py-2 text-xs" onClick={() => setMenuState('MAIN')}>Back</button>
             </div>
           )}

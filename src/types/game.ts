@@ -26,6 +26,8 @@ export interface Move {
   type: string;
   accuracy: number;
   damage_class: string; // 'physical' or 'special'
+  pp: number;
+  maxPp: number;
 }
 
 export interface Pokemon {

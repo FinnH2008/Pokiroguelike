@@ -123,7 +123,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   healParty: () =>
     set((state) => ({
-      party: state.party.map((p) => ({ ...p, currentHp: p.maxHp })),
+      party: state.party.map((p) => ({
+        ...p,
+        currentHp: p.maxHp,
+        moves: p.moves.map(m => ({ ...m, pp: m.maxPp }))
+      })),
     })),
 
   gainExp: (index, amount) => {
