@@ -82,6 +82,8 @@ export const fetchPokemonData = async (idOrName: number | string, level: number 
           damage_class: moveData.damage_class.name,
           pp: maxPp,
           maxPp: maxPp,
+          stat_changes: moveData.stat_changes,
+          meta: moveData.meta,
         });
       }
     } catch (e) {
@@ -117,7 +119,9 @@ export const fetchPokemonData = async (idOrName: number | string, level: number 
     sprites: {
       front: isShiny ? (data.sprites.front_shiny || data.sprites.front_default) : data.sprites.front_default,
       back: isShiny ? (data.sprites.back_shiny || data.sprites.back_default) : data.sprites.back_default,
-    }
+    },
+    status: null,
+    heldItem: null,
   };
 };
 

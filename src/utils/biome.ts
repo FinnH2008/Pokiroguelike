@@ -34,13 +34,13 @@ export const getBiomeBackground = (biome: BiomeType): React.CSSProperties => {
 
 export const getCombatBackground = (biome: BiomeType): React.CSSProperties => {
   switch(biome) {
-    case 'GRASS': return { background: 'linear-gradient(to bottom, #4facfe 0%, #00f2fe 50%, #43e97b 50%, #38f9d7 100%)' };
-    case 'CAVE': return { background: 'linear-gradient(to bottom, #434343 0%, black 50%, #594f4f 50%, #544a4a 100%)' };
-    case 'WATER': return { background: 'linear-gradient(to bottom, #89f7fe 0%, #66a6ff 50%, #09203f 50%, #537895 100%)' };
-    case 'CITY': return { background: 'linear-gradient(to bottom, #6a85b6 0%, #bac8e0 50%, #2c3e50 50%, #3498db 100%)' };
-    case 'VOLCANO': return { background: 'linear-gradient(to bottom, #16222A 0%, #3A6073 50%, #870000 50%, #190A05 100%)' };
-    case 'ICE': return { background: 'linear-gradient(to bottom, #e0c3fc 0%, #8ec5fc 50%, #E0EAFC 50%, #CFDEF3 100%)' };
-    default: return { background: 'linear-gradient(to bottom, #29323c 0%, #485563 100%)' };
+    case 'GRASS': return { backgroundImage: 'url(https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=2000&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' };
+    case 'CAVE': return { backgroundImage: 'url(https://images.unsplash.com/photo-1518182170546-076616fd4aa7?q=80&w=2000&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' };
+    case 'WATER': return { backgroundImage: 'url(https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' };
+    case 'CITY': return { backgroundImage: 'url(https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' };
+    case 'VOLCANO': return { backgroundImage: 'url(https://images.unsplash.com/photo-1611082093557-414842a2ee36?q=80&w=2000&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' };
+    case 'ICE': return { backgroundImage: 'url(https://images.unsplash.com/photo-1520697940177-3e1cb0276d49?q=80&w=2000&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' };
+    default: return { backgroundImage: 'url(https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=2000&auto=format&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' };
   }
 };
 

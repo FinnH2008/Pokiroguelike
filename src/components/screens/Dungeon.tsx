@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { getBiomeForFloor, getBiomeBackground, getRandomPokemonIdForBiome } from '../../utils/biome';
 import WheelOfFortune from './WheelOfFortune';
+import RPGEventNode from './RPGEventNode';
 import { fetchPokemonData } from '../../services/api';
 import { Loader2, Swords, Tent, Skull, ShoppingBag, HelpCircle, Gift } from 'lucide-react';
 import type { MapNode, NodeType } from '../../types/game';
@@ -24,6 +25,7 @@ const Dungeon: React.FC = () => {
   const { floor, stage, currentNodes, advanceStage, generateNodes, setGameState, inventory, party, removeItem, addItem } = useGameStore();
   const [log, setLog] = useState<string[]>(['You look at the map...']);
   const [showWheel, setShowWheel] = useState(false);
+  const [showEvent, setShowEvent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const biome = getBiomeForFloor(floor);
@@ -78,8 +80,9 @@ const Dungeon: React.FC = () => {
         break;
 
       case 'EVENT':
-        // Reuse wheel for event
-        setShowWheel(true);
+        // Randomly pick between Wheel or Text RPG Event
+        if (Math.random() < 0.5) setShowWheel(true);
+        else setShowEvent(true);
         break;
 
       case 'CAMP':
@@ -101,11 +104,20 @@ const Dungeon: React.FC = () => {
     generateNodes();
   };
 
-  const handleItemUse = (e: React.MouseEvent, pokeIndex: number, itemType: 'rarecandies' | 'potions' | 'superpotions' | 'revives') => {
+  const handleItemUse = (e: React.MouseEvent, pokeIndex: number, itemType: keyof typeof inventory) => {
     e.stopPropagation();
     const poke = party[pokeIndex];
 
-    if (itemType === 'revives' && poke.currentHp === 0) {
+    if (['leftovers', 'lifeorbs', 'choicebands', 'focussashes'].includes(itemType)) {
+      if (removeItem(itemType, 1)) {
+        // If already holding something, put it back in inventory
+        if (poke.heldItem) {
+          useGameStore.getState().addItem(poke.heldItem as keyof typeof inventory, 1);
+        }
+        useGameStore.getState().updatePokemon(pokeIndex, { heldItem: itemType });
+        addLog(`Equipped ${itemType} to ${poke.name}!`);
+      }
+    } else if (itemType === 'revives' && poke.currentHp === 0) {
       if (removeItem('revives', 1)) {
         useGameStore.getState().updatePokemon(pokeIndex, { currentHp: Math.floor(poke.maxHp / 2) });
         addLog(`Revived ${poke.name}!`);
@@ -218,6 +230,27 @@ const Dungeon: React.FC = () => {
 
               {/* Quick Item Actions Overlay (Visible on Hover & Focus) */}
               <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex absolute right-2 top-1/2 -translate-y-1/2 gap-1 bg-black/80 backdrop-blur-md p-1 rounded-lg border border-white/20 shadow-xl transition-opacity">
+                {inventory.leftovers > 0 && !p.heldItem && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'leftovers')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-yellow-300 font-sans" title="Equip Leftovers">Eq. Leftovers</button>
+                )}
+                {inventory.lifeorbs > 0 && !p.heldItem && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'lifeorbs')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-purple-300 font-sans" title="Equip Life Orb">Eq. Life Orb</button>
+                )}
+                {inventory.choicebands > 0 && !p.heldItem && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'choicebands')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-red-300 font-sans" title="Equip Choice Band">Eq. Choice Band</button>
+                )}
+                {inventory.focussashes > 0 && !p.heldItem && (
+                  <button onClick={(e) => handleItemUse(e, idx, 'focussashes')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-orange-300 font-sans" title="Equip Focus Sash">Eq. Sash</button>
+                )}
+                {p.heldItem && (
+                  <button onClick={(e) => {
+                    e.stopPropagation();
+                    useGameStore.getState().addItem(p.heldItem as any, 1);
+                    useGameStore.getState().updatePokemon(idx, { heldItem: null });
+                    addLog(`Unequipped ${p.heldItem} from ${p.name}.`);
+                  }} className="p-1 hover:bg-red-500/30 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-white font-sans" title="Unequip">Unequip</button>
+                )}
+
                 {inventory.revives > 0 && p.currentHp === 0 && (
                   <button onClick={(e) => handleItemUse(e, idx, 'revives')} className="p-1 hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none rounded text-[10px] text-purple-300 font-sans" title="Use Revive">Revive</button>
                 )}
@@ -247,6 +280,7 @@ const Dungeon: React.FC = () => {
       </div>
 
       {showWheel && <WheelOfFortune onComplete={() => { setShowWheel(false); finishNodeAndAdvance(); }} />}
+      {showEvent && <RPGEventNode onComplete={() => { setShowEvent(false); finishNodeAndAdvance(); }} />}
     </div>
   );
 };

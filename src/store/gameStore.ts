@@ -49,6 +49,16 @@ const initialInventory: Inventory = {
   revives: 1,
   materials: 0,
   rarecandies: 0,
+  antidotes: 0,
+  paralyzeheals: 0,
+  awakenings: 0,
+  iceheals: 0,
+  burnheals: 0,
+  fullheals: 0,
+  leftovers: 0,
+  lifeorbs: 0,
+  choicebands: 0,
+  focussashes: 0,
 };
 
 // Main Game Store (Non-persistent)

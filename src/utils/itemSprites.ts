@@ -1,0 +1,24 @@
+export const ITEM_SPRITES: Record<string, string> = {
+  pokeballs: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png',
+  superballs: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png',
+  hyperballs: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png',
+  masterballs: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png',
+  potions: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/potion.png',
+  superpotions: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/super-potion.png',
+  revives: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/revive.png',
+  materials: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/stardust.png',
+  rarecandies: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/rare-candy.png',
+  antidotes: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/antidote.png',
+  paralyzeheals: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/paralyze-heal.png',
+  awakenings: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/awakening.png',
+  iceheals: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ice-heal.png',
+  burnheals: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/burn-heal.png',
+  fullheals: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/full-heal.png',
+  leftovers: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/leftovers.png',
+  lifeorbs: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/life-orb.png',
+  choicebands: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/choice-band.png',
+  focussashes: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/focus-sash.png',
+};
+
+// We don't necessarily need to fetch from API every time since the URLs are predictable,
+// we can just use this map to get the sprite for any item in the inventory.

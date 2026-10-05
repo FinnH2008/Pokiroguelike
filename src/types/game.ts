@@ -20,6 +20,8 @@ export interface PokemonType {
   };
 }
 
+export type StatusAilment = 'burn' | 'poison' | 'paralysis' | 'sleep' | 'freeze';
+
 export interface Move {
   name: string;
   power: number;
@@ -28,6 +30,11 @@ export interface Move {
   damage_class: string; // 'physical' or 'special'
   pp: number;
   maxPp: number;
+  stat_changes?: { change: number; stat: { name: string } }[];
+  meta?: {
+    ailment: { name: string };
+    ailment_chance: number;
+  };
 }
 
 export interface Pokemon {
@@ -60,6 +67,8 @@ export interface Pokemon {
     front: string;
     back: string;
   };
+  status: StatusAilment | null;
+  heldItem: string | null;
 }
 
 export interface Inventory {
@@ -73,6 +82,16 @@ export interface Inventory {
   revives: number;
   materials: number;
   rarecandies: number;
+  antidotes: number;
+  paralyzeheals: number;
+  awakenings: number;
+  iceheals: number;
+  burnheals: number;
+  fullheals: number;
+  leftovers: number;
+  lifeorbs: number;
+  choicebands: number;
+  focussashes: number;
 }
 
 export interface PokedexEntry {

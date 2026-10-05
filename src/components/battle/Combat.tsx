@@ -45,13 +45,107 @@ const Combat: React.FC = () => {
     setTimeout(() => setFlash(false), 200);
   };
 
+  const resolvePostTurn = (poke: Pokemon, isPlayer: boolean) => {
+    let currentHp = poke.currentHp;
+
+    // Status Damage
+    if (poke.status === 'poison' || poke.status === 'burn') {
+      const dmg = Math.floor(poke.maxHp / 8);
+      currentHp -= dmg;
+      setLog(`${poke.name} is hurt by its ${poke.status}!`);
+    }
+
+    // Held Item Healing
+    if (poke.heldItem === 'leftovers') {
+      const heal = Math.floor(poke.maxHp / 16);
+      currentHp = Math.min(poke.maxHp, currentHp + heal);
+      setLog(`${poke.name} restored HP using its Leftovers!`);
+    }
+
+    currentHp = Math.max(0, currentHp);
+
+    if (isPlayer) {
+      useGameStore.getState().updatePokemon(activePlayerIdx, { currentHp });
+    } else {
+      setEnemy(prev => prev ? { ...prev, currentHp } : null);
+    }
+    return currentHp;
+  };
+
+  const handleFocusSash = (hpBefore: number, hpAfter: number, maxHp: number, isPlayer: boolean, heldItem: string | null) => {
+    if (heldItem === 'focussashes' && hpBefore === maxHp && hpAfter <= 0) {
+      setLog(`${isPlayer ? playerPokemon?.name : enemy?.name} hung on using its Focus Sash!`);
+      // Consume item
+      if (isPlayer) {
+        useGameStore.getState().updatePokemon(activePlayerIdx, { heldItem: null });
+      } else {
+        setEnemy(prev => prev ? { ...prev, heldItem: null } : null);
+      }
+      return 1;
+    }
+    return hpAfter;
+  };
+
+  const checkStatusPreTurn = (poke: Pokemon): boolean => {
+    if (poke.status === 'paralysis') {
+      if (Math.random() < 0.25) {
+        setLog(`${poke.name} is paralyzed! It can't move!`);
+        return false;
+      }
+    }
+    if (poke.status === 'freeze') {
+      if (Math.random() < 0.2) {
+        setLog(`${poke.name} thawed out!`);
+        if (poke === playerPokemon) useGameStore.getState().updatePokemon(activePlayerIdx, { status: null });
+        else setEnemy(prev => prev ? { ...prev, status: null } : null);
+      } else {
+        setLog(`${poke.name} is frozen solid!`);
+        return false;
+      }
+    }
+    if (poke.status === 'sleep') {
+      if (Math.random() < 0.33) {
+        setLog(`${poke.name} woke up!`);
+        if (poke === playerPokemon) useGameStore.getState().updatePokemon(activePlayerIdx, { status: null });
+        else setEnemy(prev => prev ? { ...prev, status: null } : null);
+      } else {
+        setLog(`${poke.name} is fast asleep.`);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const applyStatusEffect = (move: Move, target: Pokemon, isTargetPlayer: boolean) => {
+    if (!target.status && move.meta?.ailment?.name && move.meta.ailment.name !== 'none') {
+      if (Math.random() * 100 < move.meta.ailment_chance) {
+        const ailmentMap: Record<string, string> = {
+          paralysis: 'paralysis', burn: 'burn', poison: 'poison', freeze: 'freeze', sleep: 'sleep'
+        };
+        const status = ailmentMap[move.meta.ailment.name];
+        if (status) {
+          setLog(`${target.name} was inflicted with ${status}!`);
+          if (isTargetPlayer) useGameStore.getState().updatePokemon(activePlayerIdx, { status: status as any });
+          else setEnemy(prev => prev ? { ...prev, status: status as any } : null);
+        }
+      }
+    }
+  };
+
   const calculateDamage = async (attacker: Pokemon, defender: Pokemon, move: Move) => {
     const isPhysical = move.damage_class === 'physical';
     const attackStat = isPhysical ? attacker.stats.attack : attacker.stats.specialAttack;
     const defenseStat = isPhysical ? defender.stats.defense : defender.stats.specialDefense;
 
     const levelFactor = (2 * attacker.level) / 5 + 2;
-    const baseDmg = ((levelFactor * move.power * (attackStat / defenseStat)) / 50) + 2;
+    let baseDmg = ((levelFactor * move.power * (attackStat / defenseStat)) / 50) + 2;
+
+    // Status modifiers
+    if (attacker.status === 'burn' && isPhysical) baseDmg *= 0.5;
+
+    // Item modifiers
+    if (attacker.heldItem === 'lifeorbs') baseDmg *= 1.3;
+    if (attacker.heldItem === 'choicebands' && isPhysical) baseDmg *= 1.5;
 
     const stab = attacker.types.includes(move.type) ? 1.5 : 1;
     const typeEff = await getTypeEffectiveness(move.type, defender.types);
@@ -65,6 +159,14 @@ const Combat: React.FC = () => {
   const enemyTurn = async (pPoke: Pokemon, ePoke: Pokemon) => {
     if (ePoke.currentHp <= 0) return;
 
+    if (!checkStatusPreTurn(ePoke)) {
+      setTimeout(() => {
+        resolvePostTurn(ePoke, false);
+        setMenuState('MAIN');
+      }, 1500);
+      return;
+    }
+
     // Pick random move
     const move = ePoke.moves[getRandomInt(0, ePoke.moves.length - 1)];
     setLog(`Enemy ${ePoke.name} used ${move.name}!`);
@@ -74,25 +176,42 @@ const Combat: React.FC = () => {
     triggerFlash();
     const dmg = await calculateDamage(ePoke, pPoke, move);
 
+    let newHp = Math.max(0, pPoke.currentHp - dmg);
+    newHp = handleFocusSash(pPoke.currentHp, newHp, pPoke.maxHp, true, pPoke.heldItem);
+
+    // Life Orb recoil
+    if (ePoke.heldItem === 'lifeorbs') {
+      const recoil = Math.floor(ePoke.maxHp * 0.1);
+      setEnemy(prev => prev ? { ...prev, currentHp: Math.max(0, prev.currentHp - recoil) } : null);
+    }
+
     useGameStore.getState().updatePokemon(activePlayerIdx, {
-      currentHp: Math.max(0, pPoke.currentHp - dmg)
+      currentHp: newHp
     });
     triggerPlayerShake();
 
-    if (pPoke.currentHp - dmg <= 0) {
+    applyStatusEffect(move, pPoke, true);
+
+    if (newHp <= 0) {
       setLog(`${pPoke.name} fainted!`);
-      // Check if others alive
       const nextAlive = party.findIndex(p => p.currentHp > 0);
       if (nextAlive === -1) {
          setTimeout(() => {
-           setGameState('MAIN_MENU'); // Simply return to main menu for now or show dedicated game over
+           setGameState('MAIN_MENU');
            useGameStore.getState().resetRun();
          }, 2000);
       } else {
          setMenuState('POKEMON');
       }
     } else {
-      setTimeout(() => setMenuState('MAIN'), 1000);
+      setTimeout(() => {
+        const afterHp = resolvePostTurn(pPoke, true);
+        if (afterHp > 0) setMenuState('MAIN');
+        else {
+           setLog(`${pPoke.name} fainted!`);
+           setMenuState('POKEMON');
+        }
+      }, 1500);
     }
   };
 
@@ -101,40 +220,50 @@ const Combat: React.FC = () => {
 
     let move = playerPokemon.moves[moveIndex];
 
+    // Choice Band check
+    if (playerPokemon.heldItem === 'choicebands') {
+      // simplified: just allowing it to be used but logically it should lock.
+    }
+
     if (isStruggle) {
-      move = {
-        name: 'struggle',
-        power: 50,
-        type: 'normal',
-        accuracy: 100,
-        damage_class: 'physical',
-        pp: 1,
-        maxPp: 1
-      };
+      move = { name: 'struggle', power: 50, type: 'normal', accuracy: 100, damage_class: 'physical', pp: 1, maxPp: 1 };
     } else {
       if (move.pp <= 0) return;
-
-      // Deduct PP
       const newMoves = [...playerPokemon.moves];
       newMoves[moveIndex] = { ...move, pp: move.pp - 1 };
       useGameStore.getState().updatePokemon(activePlayerIdx, { moves: newMoves });
     }
 
-    setMenuState('MAIN'); // hide menus
+    setMenuState('MAIN');
+
+    if (!checkStatusPreTurn(playerPokemon)) {
+      setTimeout(() => enemyTurn(playerPokemon, enemy), 1500);
+      return;
+    }
+
     setLog(`${playerPokemon.name} used ${move.name}!`);
     await new Promise(r => setTimeout(r, 1000));
 
     triggerFlash();
     const dmg = await calculateDamage(playerPokemon, enemy, move);
 
-    const newEnemyHp = Math.max(0, enemy.currentHp - dmg);
+    let newEnemyHp = Math.max(0, enemy.currentHp - dmg);
+    newEnemyHp = handleFocusSash(enemy.currentHp, newEnemyHp, enemy.maxHp, false, enemy.heldItem);
+
+    // Life Orb recoil
+    if (playerPokemon.heldItem === 'lifeorbs') {
+      const recoil = Math.floor(playerPokemon.maxHp * 0.1);
+      useGameStore.getState().updatePokemon(activePlayerIdx, { currentHp: Math.max(0, playerPokemon.currentHp - recoil) });
+    }
+
     setEnemy({ ...enemy, currentHp: newEnemyHp });
     triggerEnemyShake();
 
+    applyStatusEffect(move, enemy, false);
+
     if (newEnemyHp <= 0) {
       setLog(`Enemy ${enemy.name} fainted! You won!`);
-      // Gain Exp
-      const expGain = Math.floor((enemy.level * 50) / 7); // very simplified exp
+      const expGain = Math.floor((enemy.level * 50) / 7);
       gainExp(activePlayerIdx, expGain);
 
       setTimeout(() => {
@@ -143,7 +272,18 @@ const Combat: React.FC = () => {
         setGameState('DUNGEON');
       }, 2000);
     } else {
-      setTimeout(() => enemyTurn(playerPokemon, { ...enemy, currentHp: newEnemyHp }), 1500);
+      setTimeout(() => {
+         const afterHp = resolvePostTurn(enemy, false);
+         if (afterHp > 0) enemyTurn(playerPokemon, { ...enemy, currentHp: afterHp });
+         else {
+            setLog(`Enemy ${enemy.name} fainted! You won!`);
+            setTimeout(() => {
+              useGameStore.getState().advanceStage();
+              useGameStore.getState().generateNodes();
+              setGameState('DUNGEON');
+            }, 2000);
+         }
+      }, 1500);
     }
   };
 
