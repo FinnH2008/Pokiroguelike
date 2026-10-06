@@ -5,6 +5,8 @@ import Dungeon from './components/screens/Dungeon';
 import Combat from './components/battle/Combat';
 import Shop from './components/screens/Shop';
 import Crafting from './components/screens/Crafting';
+import Login from './components/screens/Login';
+import GameOver from './components/screens/GameOver';
 
 function App() {
   const gameState = useGameStore(state => state.gameState);
@@ -16,12 +18,14 @@ function App() {
 
       <div className="relative w-full h-full flex items-center justify-center">
         <div className="w-full h-full sm:max-w-7xl sm:h-[90vh] sm:rounded-[3rem] overflow-hidden sm:border sm:border-white/20 shadow-2xl relative bg-black/20 backdrop-blur-sm">
+          {gameState === 'LOGIN' && <Login />}
           {gameState === 'MAIN_MENU' && <MainMenu />}
           {gameState === 'STARTER_SELECTION' && <StarterSelection />}
           {gameState === 'DUNGEON' && <Dungeon />}
           {gameState === 'COMBAT' && <Combat />}
           {gameState === 'SHOP' && <Shop />}
           {gameState === 'CRAFTING' && <Crafting />}
+          {gameState === 'GAME_OVER' && <GameOver />}
         </div>
       </div>
     </div>

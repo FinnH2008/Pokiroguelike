@@ -33,6 +33,9 @@ interface GameStoreState {
 
   weather: WeatherType;
   setWeather: (w: WeatherType) => void;
+
+  runStats: { enemiesDefeated: number; tokensGained: number };
+  incrementRunStat: (stat: 'enemiesDefeated' | 'tokensGained', amount: number) => void;
 }
 
 interface PersistentStoreState {
@@ -71,7 +74,7 @@ const initialInventory: Inventory = {
 
 // Main Game Store (Non-persistent)
 export const useGameStore = create<GameStoreState>((set, get) => ({
-  gameState: 'MAIN_MENU',
+  gameState: 'LOGIN',
   setGameState: (state) => set({ gameState: state }),
 
   inventory: { ...initialInventory },
@@ -257,6 +260,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     currentNodes: [],
     currentEnemy: null,
     weather: 'none',
+    runStats: { enemiesDefeated: 0, tokensGained: 0 },
   }),
 
   currentEnemy: null,
@@ -264,6 +268,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   weather: 'none',
   setWeather: (w) => set({ weather: w }),
+
+  runStats: { enemiesDefeated: 0, tokensGained: 0 },
+  incrementRunStat: (stat, amount) => set((state) => ({
+    runStats: { ...state.runStats, [stat]: state.runStats[stat] + amount }
+  })),
 }));
 
 // Persistent Store (Pokedex & Meta Progression)

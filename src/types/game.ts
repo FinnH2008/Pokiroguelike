@@ -1,4 +1,4 @@
-export type GameState = 'MAIN_MENU' | 'STARTER_SELECTION' | 'DUNGEON' | 'COMBAT' | 'GAME_OVER' | 'VICTORY' | 'SHOP' | 'CRAFTING' | 'WHEEL' | 'TREASURE';
+export type GameState = 'LOGIN' | 'MAIN_MENU' | 'STARTER_SELECTION' | 'DUNGEON' | 'COMBAT' | 'GAME_OVER' | 'VICTORY' | 'SHOP' | 'CRAFTING' | 'WHEEL' | 'TREASURE';
 
 export type NodeType = 'COMBAT' | 'ELITE' | 'SHOP' | 'TREASURE' | 'EVENT' | 'CAMP' | 'BOSS';
 

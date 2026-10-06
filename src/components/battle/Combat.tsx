@@ -183,7 +183,10 @@ const Combat: React.FC = () => {
     // RNG factor between 0.85 and 1.0
     const rng = getRandomInt(85, 100) / 100;
 
-    return Math.floor(baseDmg * stab * typeEff * rng);
+    return {
+      damage: Math.floor(baseDmg * stab * typeEff * rng),
+      typeEff
+    };
   };
 
   const enemyTurn = async (pPoke: Pokemon, ePoke: Pokemon) => {
@@ -204,7 +207,18 @@ const Combat: React.FC = () => {
     await new Promise(r => setTimeout(r, 1000));
 
     triggerFlash();
-    const dmg = await calculateDamage(ePoke, pPoke, move);
+    const { damage: dmg, typeEff } = await calculateDamage(ePoke, pPoke, move);
+
+    if (typeEff > 1) {
+      await new Promise(r => setTimeout(r, 500));
+      setLog("It's super effective!");
+    } else if (typeEff < 1 && typeEff > 0) {
+      await new Promise(r => setTimeout(r, 500));
+      setLog("It's not very effective...");
+    } else if (typeEff === 0) {
+      await new Promise(r => setTimeout(r, 500));
+      setLog(`It had no effect on ${pPoke.name}!`);
+    }
 
     let newHp = Math.max(0, pPoke.currentHp - dmg);
     newHp = handleFocusSash(pPoke.currentHp, newHp, pPoke.maxHp, true, pPoke.heldItem);
@@ -227,8 +241,7 @@ const Combat: React.FC = () => {
       const nextAlive = party.findIndex(p => p.currentHp > 0);
       if (nextAlive === -1) {
          setTimeout(() => {
-           setGameState('MAIN_MENU');
-           useGameStore.getState().resetRun();
+           setGameState('GAME_OVER');
          }, 1500);
       } else {
          setMenuState('POKEMON');
@@ -311,7 +324,18 @@ const Combat: React.FC = () => {
     await new Promise(r => setTimeout(r, 1000));
 
     triggerFlash();
-    const dmg = await calculateDamage(playerPokemon, enemy, move);
+    const { damage: dmg, typeEff } = await calculateDamage(playerPokemon, enemy, move);
+
+    if (typeEff > 1) {
+      await new Promise(r => setTimeout(r, 500));
+      setLog("It's super effective!");
+    } else if (typeEff < 1 && typeEff > 0) {
+      await new Promise(r => setTimeout(r, 500));
+      setLog("It's not very effective...");
+    } else if (typeEff === 0) {
+      await new Promise(r => setTimeout(r, 500));
+      setLog(`It had no effect on ${enemy.name}!`);
+    }
 
     let newEnemyHp = Math.max(0, enemy.currentHp - dmg);
     newEnemyHp = handleFocusSash(enemy.currentHp, newEnemyHp, enemy.maxHp, false, enemy.heldItem);
